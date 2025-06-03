@@ -98,7 +98,7 @@ interface Stats {
 }
 
 // Configuración de la API
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "localhost:8080/api"
 
 export default function OrdenesVentasPage() {
   const [activeTab, setActiveTab] = useState("ordenes")
@@ -123,7 +123,7 @@ export default function OrdenesVentasPage() {
   const fetchOrdenesCompra = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`${API_BASE_URL}/ordenes-compra`)
+      const response = await fetch(`${API_BASE_URL}/ordenes`)
 
       if (!response.ok) {
         throw new Error(`Error ${response.status}: ${response.statusText}`)
@@ -283,8 +283,13 @@ export default function OrdenesVentasPage() {
                 <h1 className="text-xl font-bold">Órdenes de Compra y Ventas</h1>
               </div>
             </div>
+        {/* Botón que redirige a /ordenes-ventas */}
+            <Button className="bg-white border-gray-700 text-gray-800 hover:bg-gray-700" onClick={() => window.location.href = '/' }>
+             Visualizar Articulos
+            </Button>
           </div>
         </div>
+
       </header>
 
       <div className="container mx-auto px-4 py-6">

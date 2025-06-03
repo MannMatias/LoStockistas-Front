@@ -62,7 +62,7 @@ export function OrdenCompraDialog({ articulo, onSave, onCancel }: OrdenCompraDia
         },
       }
 
-      const response = await fetch(`${API_BASE_URL}/ordenes-compra`, {
+      const response = await fetch(`${API_BASE_URL}/ordenes`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

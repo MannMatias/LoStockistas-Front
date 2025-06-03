@@ -13,6 +13,7 @@ import {
   Loader2,
   ShoppingCart,
   DollarSign,
+  Link,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -23,6 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast"
 import { ArticuloForm } from "@/components/articulo-form"
 import { OrdenCompraDialog } from "@/components/orden-compra-dialog"
+
 
 interface Proveedor {
   codProveedor: number
@@ -109,16 +111,18 @@ export default function InventoryManagement() {
 
   // Función para obtener proveedores
   const fetchProveedores = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/proveedores`)
-      if (response.ok) {
-        const data: Proveedor[] = await response.json()
-        setProveedores(data)
-      }
-    } catch (error) {
-      console.error("Error fetching proveedores:", error)
-    }
+try {
+  const response = await fetch(`${API_BASE_URL}/proveedores`); 
+  const text = await response.text();
+  try {
+    const data = JSON.parse(text);
+    // Usá data normalmente
+  } catch (err) {
+    console.error("JSON inválido:", text);
   }
+} catch (err) {
+  console.error("Error fetch:", err);
+}}
 
   // Función para eliminar artículo (baja lógica)
   const deleteArticulo = async (codArticulo: number) => {
@@ -271,26 +275,34 @@ export default function InventoryManagement() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      {/* Header */}
-      <header className="bg-gray-800 border-b border-gray-700">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
-                  <Package className="w-5 h-5 text-white" />
-                </div>
-                <h1 className="text-xl font-bold">Gestión de Inventario</h1>
-              </div>
-            </div>
-            <Button className="bg-red-600 hover:bg-red-700" onClick={() => setShowArticuloForm(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Agregar Artículo
-            </Button>
+     {/* Header */}
+<header className="bg-gray-800 border-b border-gray-700">
+  <div className="container mx-auto px-4 py-4">
+    <div className="flex items-center justify-between">
+      <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2">
+          <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
+            <Package className="w-5 h-5 text-white" />
           </div>
+          <h1 className="text-xl font-bold text-white">Gestión de Inventario</h1>
         </div>
-      </header>
+      </div>
 
+      <div className="flex items-center space-x-2">
+        {/* Botón que redirige a /ventordenes-as */}
+        <Button className="bg-white border-gray-700 text-gray-800 hover:bg-gray-700" onClick={() => window.location.href = '/ordenes-ventas' }>
+         Visualizar Ordenes
+        </Button>
+
+        {/* Botón para agregar artículo */}
+        <Button className="bg-red-600 hover:bg-red-700" onClick={() => setShowArticuloForm(true)}>
+          <Plus className="w-4 h-4 mr-2" />
+          Agregar Artículo
+        </Button>
+      </div>
+    </div>
+  </div>
+</header>
       <div className="container mx-auto px-4 py-6">
         {/* Stats Cards */}
         <div className="flex flex-wrap gap-4 mb-6 justify-between" >
