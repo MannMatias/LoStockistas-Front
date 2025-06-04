@@ -24,6 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast"
 import { ArticuloForm } from "@/components/articulo-form"
 import { OrdenCompraDialog } from "@/components/orden-compra-dialog"
+import { set } from "date-fns"
 
 
 interface Proveedor {
@@ -114,6 +115,7 @@ export default function InventoryManagement() {
 try {
   const response = await fetch(`${API_BASE_URL}/proveedores`); 
   const text = await response.text();
+  setProveedores(JSON.parse(text));
   try {
     const data = JSON.parse(text);
     // Usá data normalmente
