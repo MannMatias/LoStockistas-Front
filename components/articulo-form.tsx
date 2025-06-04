@@ -69,7 +69,7 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
     stockSeguridadLF: 0,
     stockSeguridadIF: 0,
     modeloInventario: "LOTEFIJO" as "LOTEFIJO" | "INTERVALOFIJO",
-    proveedorPredeterminadoId: "",
+    proveedorPredeterminadoId: 0,
   })
 
   const [loading, setLoading] = useState(false)
@@ -92,7 +92,7 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
         stockSeguridadLF: articulo.stockSeguridadLF,
         stockSeguridadIF: articulo.stockSeguridadIF,
         modeloInventario: articulo.modeloInventario,
-        proveedorPredeterminadoId: articulo.proveedorPredeterminado.nombreProveedor,
+        proveedorPredeterminadoId: articulo.proveedorPredeterminado.codProveedor,
       })
     }
   }, [articulo])
@@ -134,7 +134,8 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
         },
       }
 
- 
+      // Eliminar el campo proveedorPredeterminadoId para evitar confusión
+ //     delete payload.proveedorPredeterminadoId
 
       const response = await fetch(url, {
         method,
