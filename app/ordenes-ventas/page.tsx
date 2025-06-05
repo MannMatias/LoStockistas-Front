@@ -3,7 +3,6 @@ import { useState, useEffect } from "react"
 import {
   Search,
   Filter,
-  MoreHorizontal,
   AlertTriangle,
   CheckCircle,
   Loader2,
@@ -18,12 +17,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Trash2, Check } from "lucide-react";
+import { Trash2, Check } from "lucide-react"
 
 interface Proveedor {
   codProveedor: number
@@ -102,7 +99,8 @@ interface ArticleStats {
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
 
 export default function ArticleOrdersSalesPage() {
-  const [currentView, setCurrentView] = useState<"articles" | "details">("articles")
+  // Modificar el estado currentView para incluir el tipo de vista
+  const [currentView, setCurrentView] = useState<"articles" | "orders" | "sales">("articles")
   const [selectedArticle, setSelectedArticle] = useState<Articulo | null>(null)
   const [activeTab, setActiveTab] = useState("ordenes")
   const [searchTerm, setSearchTerm] = useState("")
@@ -129,6 +127,7 @@ export default function ArticleOrdersSalesPage() {
   const [articleOrdersCounts, setArticleOrdersCounts] = useState<Record<number, number>>({})
   const [articleSalesCounts, setArticleSalesCounts] = useState<Record<number, number>>({})
   const [loadingCounts, setLoadingCounts] = useState(false)
+  const [loadingActions, setLoadingActions] = useState<Record<string, boolean>>({})
 
   // Función para obtener todos los artículos
   const fetchArticulos = async () => {
@@ -155,67 +154,84 @@ export default function ArticleOrdersSalesPage() {
     } finally {
       setLoading(false)
     }
-
   }
+
   const eliminarOrden = async (numOC: number) => {
+    setLoadingActions((prev) => ({ ...prev, [`eliminar-${numOC}`]: true }))
     try {
-      const response = await fetch(`/api/ordenes/${numOC}/cancelar`, {
+      const response = await fetch(`${API_BASE_URL}/ordenes/${numOC}/cancelar`, {
         method: "DELETE",
-      });
+      })
 
       if (!response.ok) {
-        throw new Error("Error al eliminar la orden");
+        throw new Error("Error al eliminar la orden")
       }
 
       toast({
         title: "Éxito",
         description: "Orden cancelada correctamente",
-      });
+      })
 
-      fetchOrdenes(); // Recargá la lista si tenés esta función
+      if (selectedArticle) {
+        await fetchOrdenesArticulo(selectedArticle.codArticulo)
+      }
     } catch (error) {
-      console.error("Error al eliminar la orden:", error);
+      console.error("Error al eliminar la orden:", error)
       toast({
         title: "Error",
         description: "No se pudo eliminar la orden",
         variant: "destructive",
-      });
+      })
+    } finally {
+      setLoadingActions((prev) => ({ ...prev, [`eliminar-${numOC}`]: false }))
     }
-  };
+  }
 
   const marcarComoEnviada = async (numOC: number) => {
+    setLoadingActions((prev) => ({ ...prev, [`enviar-${numOC}`]: true }))
     try {
-      const response = await fetch(`/api/ordenes/${numOC}/enviar`, { method: "PUT" });
+      const response = await fetch(`${API_BASE_URL}/ordenes/${numOC}/enviar`, { method: "PUT" })
       if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
+        throw new Error(`Error ${response.status}: ${response.statusText}`)
       }
-      // fetchOrdenes();
+
+      if (selectedArticle) {
+        await fetchOrdenesArticulo(selectedArticle.codArticulo)
+      }
     } catch (error) {
-      console.error("Error al marcar como enviada:", error);
+      console.error("Error al marcar como enviada:", error)
       toast({
         title: "Error",
         description: "No se pudo marcar como enviada",
         variant: "destructive",
-      });
+      })
+    } finally {
+      setLoadingActions((prev) => ({ ...prev, [`enviar-${numOC}`]: false }))
     }
-  };
+  }
 
   const finalizarOrden = async (numOC: number) => {
+    setLoadingActions((prev) => ({ ...prev, [`finalizar-${numOC}`]: true }))
     try {
-      const response = await fetch(`/api/ordenes/${numOC}/finalizar`, { method: "PUT" });
+      const response = await fetch(`${API_BASE_URL}/ordenes/${numOC}/finalizar`, { method: "PUT" })
       if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
+        throw new Error(`Error ${response.status}: ${response.statusText}`)
       }
-      // fetchOrdenes();
+
+      if (selectedArticle) {
+        await fetchOrdenesArticulo(selectedArticle.codArticulo)
+      }
     } catch (error) {
-      console.error("Error al finalizar la orden:", error);
+      console.error("Error al finalizar la orden:", error)
       toast({
         title: "Error",
         description: "No se pudo finalizar la orden",
         variant: "destructive",
-      });
+      })
+    } finally {
+      setLoadingActions((prev) => ({ ...prev, [`finalizar-${numOC}`]: false }))
     }
-  };
+  }
 
   // Función para obtener órdenes de un artículo específico
   const fetchOrdenesArticulo = async (articuloId: number) => {
@@ -338,19 +354,24 @@ export default function ArticleOrdersSalesPage() {
     }
   }
 
-  // Manejar selección de artículo
-  const handleArticleSelect = async (articulo: Articulo) => {
+  // Modificar las funciones de manejo de selección de artículo para incluir el tipo de vista
+  const handleArticleSelectOrders = async (articulo: Articulo) => {
     setSelectedArticle(articulo)
-    setCurrentView("details")
+    setCurrentView("orders")
     setLoading(true)
-
-    // Cargar datos del artículo seleccionado
-    await Promise.all([fetchOrdenesArticulo(articulo.codArticulo), fetchVentasArticulo(articulo.codArticulo)])
-
+    await fetchOrdenesArticulo(articulo.codArticulo)
     setLoading(false)
   }
 
-  // Volver a la vista de artículos
+  const handleArticleSelectSales = async (articulo: Articulo) => {
+    setSelectedArticle(articulo)
+    setCurrentView("sales")
+    setLoading(true)
+    await fetchVentasArticulo(articulo.codArticulo)
+    setLoading(false)
+  }
+
+  // Modificar la función handleBackToArticles
   const handleBackToArticles = () => {
     setCurrentView("articles")
     setSelectedArticle(null)
@@ -359,6 +380,16 @@ export default function ArticleOrdersSalesPage() {
     setSearchTerm("")
     setSelectedEstado("Todos")
   }
+
+  // Reemplazar la función handleArticleSelect existente with the new functions
+  // Eliminar o comentar la función original handleArticleSelect
+  // const handleArticleSelect = async (articulo: Articulo) => {
+  //   setSelectedArticle(articulo)
+  //   setCurrentView("details")
+  //   setLoading(true)
+  //   await Promise.all([fetchOrdenesArticulo(articulo.codArticulo), fetchVentasArticulo(articulo.codArticulo)])
+  //   setLoading(false)
+  // }
 
   // Actualizar estadísticas del artículo seleccionado
   useEffect(() => {
@@ -393,17 +424,16 @@ export default function ArticleOrdersSalesPage() {
   // Filtrar órdenes de compra
   const filteredOrdenes = Array.isArray(ordenesCompra)
     ? ordenesCompra.filter((orden) => {
-      const safeSearchTerm = searchTerm?.toLowerCase() || ""
+        const safeSearchTerm = searchTerm?.toLowerCase() || ""
 
-      const matchesSearch =
-        orden.numOC.toString().includes(safeSearchTerm) ||
-        orden.proveedor?.nombreProveedor?.toLowerCase().includes(safeSearchTerm)
+        const matchesSearch =
+          orden.numOC.toString().includes(safeSearchTerm) ||
+          orden.proveedor?.nombreProveedor?.toLowerCase().includes(safeSearchTerm)
 
-      const matchesEstado =
-        selectedEstado === "Todos" || orden.estado?.nombreEstadoOC === selectedEstado
+        const matchesEstado = selectedEstado === "Todos" || orden.estado?.nombreEstadoOC === selectedEstado
 
-      return matchesSearch && matchesEstado
-    })
+        return matchesSearch && matchesEstado
+      })
     : []
 
   // Filtrar ventas
@@ -413,11 +443,11 @@ export default function ArticleOrdersSalesPage() {
 
   const getEstadoColor = (estado: string) => {
     switch (estado) {
-      case "COMPLETADA":
+      case "FINALIZADA":
         return "bg-green-500"
       case "PENDIENTE":
         return "bg-yellow-500"
-      case "EN PROCESO":
+      case "ENVIADA":
         return "bg-blue-500"
       case "CANCELADA":
         return "bg-red-500"
@@ -500,7 +530,7 @@ export default function ArticleOrdersSalesPage() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              {currentView === "details" && (
+              {currentView !== "articles" && (
                 <Button variant="ghost" onClick={handleBackToArticles} className="text-gray-400 hover:text-white">
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Volver
@@ -514,10 +544,13 @@ export default function ArticleOrdersSalesPage() {
                     <ClipboardList className="w-5 h-5 text-white" />
                   )}
                 </div>
+                {/* Modificar el título del header para mostrar "Órdenes - " o "Ventas - " según corresponda */}
                 <h1 className="text-xl font-bold">
                   {currentView === "articles"
                     ? "Seleccionar Artículo"
-                    : `Órdenes y Ventas - ${selectedArticle?.nombreArt}`}
+                    : currentView === "orders"
+                      ? `Órdenes - ${selectedArticle?.nombreArt}`
+                      : `Ventas - ${selectedArticle?.nombreArt}`}
                 </h1>
               </div>
             </div>
@@ -535,6 +568,7 @@ export default function ArticleOrdersSalesPage() {
       </header>
 
       <div className="container mx-auto px-4 py-6">
+        {/* Reemplazar la sección de detalles (el else del currentView === "articles") con la nueva lógica */}
         {currentView === "articles" ? (
           // Vista de selección de artículos
           <>
@@ -589,7 +623,6 @@ export default function ArticleOrdersSalesPage() {
                   <Card
                     key={articulo.codArticulo}
                     className="bg-gray-800 border-gray-700 hover:border-red-600 transition-colors cursor-pointer"
-                    onClick={() => handleArticleSelect(articulo)}
                   >
                     <CardContent className="p-4">
                       <div className="space-y-3">
@@ -611,7 +644,6 @@ export default function ArticleOrdersSalesPage() {
                           </Badge>
                         </div>
 
-
                         <div className="grid grid-cols-2 gap-2 text-xs">
                           <div>
                             <span className="text-gray-400">Stock: </span>
@@ -630,9 +662,21 @@ export default function ArticleOrdersSalesPage() {
                           </div>
                         </div>
 
-                        <Button className="w-full bg-red-600 hover:bg-red-700 text-white">
-                          Ver Órdenes y Ventas
-                        </Button>
+                        {/* Modificar los botones en la vista de artículos */}
+                        <div className="flex gap-2">
+                          <Button
+                            className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                            onClick={() => handleArticleSelectOrders(articulo)}
+                          >
+                            Ver Órdenes
+                          </Button>
+                          <Button
+                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                            onClick={() => handleArticleSelectSales(articulo)}
+                          >
+                            Ver Ventas
+                          </Button>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -648,8 +692,8 @@ export default function ArticleOrdersSalesPage() {
               </div>
             )}
           </>
-        ) : (
-          // Vista de detalles de órdenes y ventas
+        ) : currentView === "orders" ? (
+          // Vista de órdenes
           <>
             {/* Article Info Card */}
             {selectedArticle && (
@@ -672,7 +716,7 @@ export default function ArticleOrdersSalesPage() {
               </Card>
             )}
 
-            {/* Stats Cards */}
+            {/* Stats Cards - Solo para órdenes */}
             <div className="flex flex-wrap gap-4 mb-6 justify-between">
               <Card className="bg-gray-800 border-gray-700 flex-1">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -706,6 +750,197 @@ export default function ArticleOrdersSalesPage() {
 
               <Card className="bg-gray-800 border-gray-700 flex-1">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-300">Monto Total Órdenes</CardTitle>
+                  <DollarSign className="h-4 w-4 text-red-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-lg font-bold text-red-500">{formatPrice(stats.montoTotalOrdenes)}</div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Órdenes Content */}
+            {loading ? (
+              <div className="text-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-red-500" />
+                <p className="text-gray-400">Cargando órdenes...</p>
+              </div>
+            ) : (
+              <>
+                {/* Filters for Ordenes */}
+                <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Input
+                      placeholder="Buscar órdenes por número o proveedor..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 bg-gray-800 border-gray-700 text-white placeholder-gray-400"
+                    />
+                  </div>
+
+                  <Select value={selectedEstado} onValueChange={setSelectedEstado}>
+                    <SelectTrigger className="w-full sm:w-48 bg-gray-800 border-gray-700 text-white">
+                      <SelectValue placeholder="Estado" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-800 border-gray-700">
+                      <SelectItem value="Todos" className="text-white hover:bg-gray-700">
+                        Todos
+                      </SelectItem>
+                      {estadosOC.map((estado) => (
+                        <SelectItem
+                          key={estado.codEstadoOC}
+                          value={estado.nombreEstadoOC}
+                          className="text-white hover:bg-gray-700"
+                        >
+                          {estado.nombreEstadoOC}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Button
+                    variant="outline"
+                    className="border-gray-700 text-gray-800 hover:bg-gray-700"
+                    onClick={() => selectedArticle && fetchOrdenesArticulo(selectedArticle.codArticulo)}
+                  >
+                    <Filter className="w-4 h-4 mr-2" />
+                    Actualizar
+                  </Button>
+                </div>
+
+                {/* Ordenes Table */}
+                <Card className="bg-gray-800 border-gray-700">
+                  <CardContent className="p-0">
+                    <Table>
+                      <TableHeader className="bg-gray-800">
+                        <TableRow className="border-gray-700 hover:bg-gray-700">
+                          <TableHead className="text-gray-400">Nº Orden</TableHead>
+                          <TableHead className="text-gray-400">Proveedor</TableHead>
+                          <TableHead className="text-gray-400">Estado</TableHead>
+                          <TableHead className="text-gray-400">Fecha Creación</TableHead>
+                          <TableHead className="text-gray-400">Cantidad</TableHead>
+                          <TableHead className="text-gray-400 text-right">Monto</TableHead>
+                          <TableHead className="text-gray-400 w-32 text-center">Acciones</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredOrdenes.length > 0 ? (
+                          filteredOrdenes.map((orden) => (
+                            <TableRow key={orden.numOC} className="border-gray-700 hover:bg-gray-700">
+                              <TableCell className="font-medium text-white">#{orden.numOC}</TableCell>
+                              <TableCell className="font-medium text-white">
+                                {orden.proveedor.nombreProveedor}
+                              </TableCell>
+                              <TableCell>
+                                <Badge className={`${getEstadoColor(orden.estado.nombreEstadoOC)} text-white`}>
+                                  {orden.estado.nombreEstadoOC}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="font-medium text-white">
+                                {formatDate(orden.fechaCreacion)}
+                              </TableCell>
+                              <TableCell className="font-medium text-white">{orden.cantArt}</TableCell>
+                              <TableCell className="text-right font-semibold text-red-400">
+                                {formatPrice(orden.montoCompra)}
+                              </TableCell>
+                              <TableCell className="flex justify-center gap-2">
+                                {/* Botón Eliminar */}
+                                <button
+                                 className={`bg-red-600 hover:bg-red-700 text-white p-2 rounded-full ${
+                                    orden.estado.nombreEstadoOC !== "PENDIENTE" ? "opacity-50 cursor-not-allowed" : ""
+                                  }`}
+                                  onClick={() => eliminarOrden(orden.numOC)}
+                                  title="Eliminar orden"
+                                  disabled={loadingActions[`eliminar-${orden.numOC}`]}
+                                >
+                                  {loadingActions[`eliminar-${orden.numOC}`] ? (
+                                    <Loader2 size={16} className="animate-spin" />
+                                  ) : (
+                                    <Trash2 size={16} />
+                                  )}
+                                </button>
+
+                                {/* Botón Enviar */}
+                                <button
+                                  className={`bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full ${
+                                    orden.estado.nombreEstadoOC !== "PENDIENTE" ? "opacity-50 cursor-not-allowed" : ""
+                                  }`}
+                                  onClick={() => marcarComoEnviada(orden.numOC)}
+                                  title="Marcar como enviada"
+                                  disabled={loadingActions[`enviar-${orden.numOC}`] || orden.estado.nombreEstadoOC !== "PENDIENTE"}
+                                >
+                                  {loadingActions[`enviar-${orden.numOC}`] ? (
+                                    <Loader2 size={16} className="animate-spin" />
+                                  ) : (
+                                    <ShoppingCart size={16} />
+                                  )}
+                                </button>
+
+
+                                {/* Botón Finalizar */}
+                                <button
+                                    className={`bg-green-600 hover:bg-green-700 text-white p-2 rounded-full ${
+                                    orden.estado.nombreEstadoOC !== "ENVIADA" ? "opacity-50 cursor-not-allowed" : ""
+                                  }`}
+                                  onClick={() => finalizarOrden(orden.numOC)}
+                                  title="Finalizar orden"
+                                  disabled={loadingActions[`finalizar-${orden.numOC}`]}
+                                >
+                                  {loadingActions[`finalizar-${orden.numOC}`] ? (
+                                    <Loader2 size={16} className="animate-spin" />
+                                  ) : (
+                                    <Check size={16} />
+                                  )}
+                                </button>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow className="border-gray-700">
+                            <TableCell
+                              colSpan={8}
+                              className="h-24 text-center text-gray-400 hover:bg-gray-700 bg-gray-800"
+                            >
+                              No se encontraron órdenes de compra para este artículo
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              </>
+            )}
+          </>
+        ) : (
+          // Vista de ventas
+          <>
+            {/* Article Info Card */}
+            {selectedArticle && (
+              <Card className="bg-gray-800 border-gray-700 mb-6">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-xl font-bold text-white">{selectedArticle.nombreArt}</h2>
+                      <p className="text-gray-400">Código: {selectedArticle.codArticulo}</p>
+                      <p className="text-gray-400">Stock Actual: {selectedArticle.stockActual}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-red-400">{formatPrice(selectedArticle.costoCompra)}</p>
+                      <p className="text-sm text-gray-400">
+                        Proveedor: {selectedArticle.proveedorPredeterminado.nombreProveedor}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Stats Cards - Solo para ventas */}
+            <div className="flex flex-wrap gap-4 mb-6 justify-between">
+              <Card className="bg-gray-800 border-gray-700 flex-1">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-gray-300">Total Ventas</CardTitle>
                   <Tag className="h-4 w-4 text-blue-500" />
                 </CardHeader>
@@ -716,250 +951,120 @@ export default function ArticleOrdersSalesPage() {
 
               <Card className="bg-gray-800 border-gray-700 flex-1">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-300">Valor Total</CardTitle>
-                  <DollarSign className="h-4 w-4 text-gray-500" />
+                  <CardTitle className="text-sm font-medium text-gray-300">Monto Total Ventas</CardTitle>
+                  <DollarSign className="h-4 w-4 text-green-500" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-lg font-bold text-gray-500">
-                    {formatPrice(stats.montoTotalVentas - stats.montoTotalOrdenes)}
+                  <div className="text-lg font-bold text-green-500">{formatPrice(stats.montoTotalVentas)}</div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gray-800 border-gray-700 flex-1">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-300">Valor Promedio de Ventas</CardTitle>
+                  <DollarSign className="h-4 w-4 text-blue-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-lg font-bold text-blue-500">
+                    {stats.totalVentas > 0 ? formatPrice(stats.montoTotalVentas / stats.totalVentas) : formatPrice(0)}
                   </div>
                 </CardContent>
               </Card>
+
+              {/* <Card className="bg-gray-800 border-gray-700 flex-1">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-300">Ganancia Estimada</CardTitle>
+                  <DollarSign className="h-4 w-4 text-green-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-lg font-bold text-green-500">{formatPrice(stats.montoTotalVentas * 0.3)}</div>
+                </CardContent>
+              </Card> */}
             </div>
 
-            {/* Tabs */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-              <TabsList className="bg-gray-800 border-gray-700">
-                <TabsTrigger
-                  value="ordenes"
-                  className="data-[state=active]:bg-red-600 data-[state=active]:text-white data-[state=active]:hover:bg-red-700 data-[state=inactive]:hover:bg-gray-500 data-[state=inactive]:hover:text-gray-800"
-                >
-                  Órdenes de Compra
-                </TabsTrigger>
-                <TabsTrigger
-                  value="ventas"
-                  className="data-[state=active]:bg-red-600 data-[state=active]:text-white data-[state=active]:hover:bg-red-700 data-[state=inactive]:hover:bg-gray-500 data-[state=inactive]:hover:text-gray-800"
-                >
-                  Ventas
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="ordenes" className="mt-4">
-                {loading ? (
-                  <div className="text-center py-12">
-                    <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-red-500" />
-                    <p className="text-gray-400">Cargando órdenes...</p>
+            {/* Ventas Content */}
+            {loading ? (
+              <div className="text-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-red-500" />
+                <p className="text-gray-400">Cargando ventas...</p>
+              </div>
+            ) : (
+              <>
+                {/* Filters for Ventas */}
+                <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Input
+                      placeholder="Buscar ventas por número..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 bg-gray-800 border-gray-700 text-white placeholder-gray-400"
+                    />
                   </div>
-                ) : (
-                  <>
-                    {/* Filters for Ordenes */}
-                    <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                      <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                        <Input
-                          placeholder="Buscar órdenes por número o proveedor..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-10 bg-gray-800 border-gray-700 text-white placeholder-gray-400"
-                        />
-                      </div>
 
-                      <Select value={selectedEstado} onValueChange={setSelectedEstado}>
-                        <SelectTrigger className="w-full sm:w-48 bg-gray-800 border-gray-700 text-white">
-                          <SelectValue placeholder="Estado" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-gray-800 border-gray-700">
-                          <SelectItem value="Todos" className="text-white hover:bg-gray-700">
-                            Todos
-                          </SelectItem>
-                          {estadosOC.map((estado) => (
-                            <SelectItem
-                              key={estado.codEstadoOC}
-                              value={estado.nombreEstadoOC}
-                              className="text-white hover:bg-gray-700"
+                  <Button
+                    variant="outline"
+                    className="border-gray-700 text-gray-800 hover:bg-gray-700"
+                    onClick={() => selectedArticle && fetchVentasArticulo(selectedArticle.codArticulo)}
+                  >
+                    <Filter className="w-4 h-4 mr-2" />
+                    Actualizar
+                  </Button>
+                </div>
+
+                {/* Ventas Table */}
+                <Card className="bg-gray-800 border-gray-700">
+                  <CardContent className="p-0">
+                    <Table>
+                      <TableHeader className="bg-gray-800">
+                        <TableRow className="border-gray-700 hover:bg-gray-700">
+                          <TableHead className="text-gray-400">Nº Venta</TableHead>
+                          <TableHead className="text-gray-400">Artículo</TableHead>
+                          <TableHead className="text-gray-400">Código</TableHead>
+                          <TableHead className="text-gray-400">Fecha</TableHead>
+                          <TableHead className="text-gray-400">Cantidad</TableHead>
+                          <TableHead className="text-gray-400">Precio Unitario</TableHead>
+                          <TableHead className="text-gray-400 text-right">Total</TableHead>
+                          <TableHead className="text-gray-400 w-10"></TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredVentas.length > 0 ? (
+                          filteredVentas.map((venta) => {
+                            const precioUnitario = venta.articulo.costoCompra * 1.3
+                            const total = venta.cantProducto * precioUnitario
+
+                            return (
+                              <TableRow key={venta.codVenta} className="border-gray-700 hover:bg-gray-700">
+                                <TableCell className="font-medium text-white">#{venta.codVenta}</TableCell>
+                                <TableCell className="font-medium text-white">{venta.articulo.nombreArt}</TableCell>
+                                <TableCell className="font-medium text-white">{venta.articulo.codArticulo}</TableCell>
+                                <TableCell className="font-medium text-white">{formatDate(venta.fechaVenta)}</TableCell>
+                                <TableCell className="font-medium text-white">{venta.cantProducto}</TableCell>
+                                <TableCell className="font-medium text-white">{formatPrice(precioUnitario)}</TableCell>
+                                <TableCell className="text-right font-semibold text-green-400">
+                                  {formatPrice(total)}
+                                </TableCell>
+                                <TableCell></TableCell>
+                              </TableRow>
+                            )
+                          })
+                        ) : (
+                          <TableRow className="border-gray-700">
+                            <TableCell
+                              colSpan={8}
+                              className="h-24 text-center text-gray-400 hover:bg-gray-700 bg-gray-800"
                             >
-                              {estado.nombreEstadoOC}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      <Button
-                        variant="outline"
-                        className="border-gray-700 text-gray-800 hover:bg-gray-700"
-                        onClick={() => selectedArticle && fetchOrdenesArticulo(selectedArticle.codArticulo)}
-                      >
-                        <Filter className="w-4 h-4 mr-2" />
-                        Actualizar
-                      </Button>
-                    </div>
-
-                    {/* Ordenes Table */}
-                    <Card className="bg-gray-800 border-gray-700">
-                      <CardContent className="p-0">
-                        <Table>
-                          <TableHeader className="bg-gray-800">
-                            <TableRow className="border-gray-700 hover:bg-gray-700">
-                              <TableHead className="text-gray-400">Nº Orden</TableHead>
-                              <TableHead className="text-gray-400">Proveedor</TableHead>
-                              <TableHead className="text-gray-400">Estado</TableHead>
-                              <TableHead className="text-gray-400">Fecha Creación</TableHead>
-                              <TableHead className="text-gray-400">Cantidad</TableHead>
-                              <TableHead className="text-gray-400 text-right">Monto</TableHead>
-                              <TableHead className="text-gray-400 w-32 text-center">Acciones</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {filteredOrdenes.length > 0 ? (
-                              filteredOrdenes.map((orden) => (
-                                <TableRow key={orden.numOC} className="border-gray-700 hover:bg-gray-700">
-                                  <TableCell className="font-medium text-white">#{orden.numOC}</TableCell>
-                                  <TableCell className="font-medium text-white">{orden.proveedor.nombreProveedor}</TableCell>
-                                  <TableCell>
-                                    <Badge className={`${getEstadoColor(orden.estado.nombreEstadoOC)} text-white`}>
-                                      {orden.estado.nombreEstadoOC}
-                                    </Badge>
-                                  </TableCell>
-                                  <TableCell className="font-medium text-white">{formatDate(orden.fechaCreacion)}</TableCell>
-                                  <TableCell className="font-medium text-white">{orden.cantArt}</TableCell>
-                                  <TableCell className="text-right font-semibold text-red-400">
-                                    {formatPrice(orden.montoCompra)}
-                                  </TableCell>
-                                  <TableCell className="flex justify-center gap-2">
-                                    {/* Botón Eliminar */}
-                                    <button
-                                      className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-full"
-                                      onClick={() => eliminarOrden(orden.numOC)}
-                                      title="Eliminar orden"
-                                    >
-                                      <Trash2 size={16} />
-                                    </button>
-
-                                    {/* Botón Enviar */}
-                                    <button
-                                      className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full"
-                                      onClick={() => marcarComoEnviada(orden.numOC)}
-                                      title="Marcar como enviada"
-                                    >
-                                      <ShoppingCart size={16} />
-                                    </button>
-
-                                    {/* Botón Finalizar */}
-                                    <button
-                                      className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-full"
-                                      onClick={() => finalizarOrden(orden.numOC)}
-                                      title="Finalizar orden"
-                                    >
-                                      <Check size={16} />
-                                    </button>
-                                  </TableCell>
-                                </TableRow>
-                              ))
-                            ) : (
-                              <TableRow className="border-gray-700">
-                                <TableCell
-                                  colSpan={8}
-                                  className="h-24 text-center text-gray-400 hover:bg-gray-700 bg-gray-800"
-                                >
-                                  No se encontraron órdenes de compra para este artículo
-                                </TableCell>
-                              </TableRow>
-                            )}
-                          </TableBody>
-                        </Table>
-                      </CardContent>
-                    </Card>
-                  </>
-                )}
-              </TabsContent>
-
-              <TabsContent value="ventas" className="mt-4">
-                {loading ? (
-                  <div className="text-center py-12">
-                    <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-red-500" />
-                    <p className="text-gray-400">Cargando ventas...</p>
-                  </div>
-                ) : (
-                  <>
-                    {/* Filters for Ventas */}
-                    <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                      <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                        <Input
-                          placeholder="Buscar ventas por número..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-10 bg-gray-800 border-gray-700 text-white placeholder-gray-400"
-                        />
-                      </div>
-
-                      <Button
-                        variant="outline"
-                        className="border-gray-700 text-gray-800 hover:bg-gray-700"
-                        onClick={() => selectedArticle && fetchVentasArticulo(selectedArticle.codArticulo)}
-                      >
-                        <Filter className="w-4 h-4 mr-2" />
-                        Actualizar
-                      </Button>
-                    </div>
-
-                    {/* Ventas Table */}
-                    <Card className="bg-gray-800 border-gray-700">
-                      <CardContent className="p-0">
-                        <Table>
-                          <TableHeader className="bg-gray-800">
-                            <TableRow className="border-gray-700 hover:bg-gray-700">
-                              <TableHead className="text-gray-400">Nº Venta</TableHead>
-                              <TableHead className="text-gray-400">Artículo</TableHead>
-                              <TableHead className="text-gray-400">Código</TableHead>
-                              <TableHead className="text-gray-400">Fecha</TableHead>
-                              <TableHead className="text-gray-400">Cantidad</TableHead>
-                              <TableHead className="text-gray-400">Precio Unitario</TableHead>
-                              <TableHead className="text-gray-400 text-right">Total</TableHead>
-                              <TableHead className="text-gray-400 w-10"></TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {filteredVentas.length > 0 ? (
-                              filteredVentas.map((venta) => {
-                                const precioUnitario = venta.articulo.costoCompra * 1.3
-                                const total = venta.cantProducto * precioUnitario
-
-                                return (
-                                  <TableRow key={venta.codVenta} className="border-gray-700 hover:bg-gray-700">
-                                    <TableCell className="font-medium text-white">#{venta.codVenta}</TableCell>
-                                    <TableCell className="font-medium text-white">{venta.articulo.nombreArt}</TableCell>
-                                    <TableCell className="font-medium text-white">{venta.articulo.codArticulo}</TableCell>
-                                    <TableCell className="font-medium text-white">{formatDate(venta.fechaVenta)}</TableCell>
-                                    <TableCell className="font-medium text-white">{venta.cantProducto}</TableCell>
-                                    <TableCell className="font-medium text-white">{formatPrice(precioUnitario)}</TableCell>
-                                    <TableCell className="text-right font-semibold text-green-400">
-                                      {formatPrice(total)}
-                                    </TableCell>
-                                    <TableCell>
-
-                                    </TableCell>
-                                  </TableRow>
-                                )
-                              })
-                            ) : (
-                              <TableRow className="border-gray-700">
-                                <TableCell
-                                  colSpan={8}
-                                  className="h-24 text-center text-gray-400 hover:bg-gray-700 bg-gray-800"
-                                >
-                                  No se encontraron ventas para este artículo
-                                </TableCell>
-                              </TableRow>
-                            )}
-                          </TableBody>
-                        </Table>
-                      </CardContent>
-                    </Card>
-                  </>
-                )}
-              </TabsContent>
-            </Tabs>
+                              No se encontraron ventas para este artículo
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              </>
+            )}
           </>
         )}
       </div>
