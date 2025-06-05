@@ -23,6 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Trash2, Check } from "lucide-react";
 
 interface Proveedor {
   codProveedor: number
@@ -154,6 +155,20 @@ export default function ArticleOrdersSalesPage() {
     } finally {
       setLoading(false)
     }
+    const eliminarOrden = async (numOC) => {
+      await fetch(`/api/ordenes-compra/${numOC}`, { method: "DELETE" });
+      // fetchOrdenes(); // Recargá la lista si tenés esta función
+    };
+
+    const marcarComoEnviada = async (numOC) => {
+      await fetch(`/api/ordenes-compra/${numOC}/enviar`, { method: "PUT" });
+      // fetchOrdenes();
+    };
+
+    const finalizarOrden = async (numOC) => {
+      await fetch(`/api/ordenes-compra/${numOC}/finalizar`, { method: "PUT" });
+      // fetchOrdenes();
+    };
   }
 
   // Función para obtener órdenes de un artículo específico
@@ -330,8 +345,8 @@ export default function ArticleOrdersSalesPage() {
   })
 
   // Filtrar órdenes de compra
-const filteredOrdenes = Array.isArray(ordenesCompra)
-  ? ordenesCompra.filter((orden) => {
+  const filteredOrdenes = Array.isArray(ordenesCompra)
+    ? ordenesCompra.filter((orden) => {
       const safeSearchTerm = searchTerm?.toLowerCase() || ""
 
       const matchesSearch =
@@ -343,7 +358,7 @@ const filteredOrdenes = Array.isArray(ordenesCompra)
 
       return matchesSearch && matchesEstado
     })
-  : []
+    : []
 
   // Filtrar ventas
   const filteredVentas = ventas.filter((venta) => {
@@ -745,7 +760,7 @@ const filteredOrdenes = Array.isArray(ordenesCompra)
                               <TableHead className="text-gray-400">Fecha Creación</TableHead>
                               <TableHead className="text-gray-400">Cantidad</TableHead>
                               <TableHead className="text-gray-400 text-right">Monto</TableHead>
-                              <TableHead className="text-gray-400 w-10"></TableHead>
+                              <TableHead className="text-gray-400 w-32 text-center">Acciones</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -763,6 +778,34 @@ const filteredOrdenes = Array.isArray(ordenesCompra)
                                   <TableCell className="font-medium text-white">{orden.cantArt}</TableCell>
                                   <TableCell className="text-right font-semibold text-red-400">
                                     {formatPrice(orden.montoCompra)}
+                                  </TableCell>
+                                  <TableCell className="flex justify-center gap-2">
+                                    {/* Botón Eliminar */}
+                                    <button
+                                      className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-full"
+                                      onClick={() => eliminarOrden(orden.numOC)}
+                                      title="Eliminar orden"
+                                    >
+                                      <Trash2 size={16} />
+                                    </button>
+
+                                    {/* Botón Enviar */}
+                                    <button
+                                      className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full"
+                                      onClick={() => marcarComoEnviada(orden.numOC)}
+                                      title="Marcar como enviada"
+                                    >
+                                      <ShoppingCart size={16} />
+                                    </button>
+
+                                    {/* Botón Finalizar */}
+                                    <button
+                                      className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-full"
+                                      onClick={() => finalizarOrden(orden.numOC)}
+                                      title="Finalizar orden"
+                                    >
+                                      <Check size={16} />
+                                    </button>
                                   </TableCell>
                                 </TableRow>
                               ))
