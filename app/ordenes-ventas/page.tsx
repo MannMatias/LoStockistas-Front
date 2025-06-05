@@ -155,21 +155,22 @@ export default function ArticleOrdersSalesPage() {
     } finally {
       setLoading(false)
     }
-    const eliminarOrden = async (numOC) => {
-      await fetch(`/api/ordenes-compra/${numOC}`, { method: "DELETE" });
+
+  }
+      const eliminarOrden = async (numOC: number) => {
+      await fetch(`/api/ordenes/${numOC}/cancelar`, { method: "DELETE" });
       // fetchOrdenes(); // Recargá la lista si tenés esta función
     };
 
-    const marcarComoEnviada = async (numOC) => {
-      await fetch(`/api/ordenes-compra/${numOC}/enviar`, { method: "PUT" });
+    const marcarComoEnviada = async (numOC: number) => {
+      await fetch(`/api/ordenes/${numOC}/enviar`, { method: "PUT" });
       // fetchOrdenes();
     };
 
-    const finalizarOrden = async (numOC) => {
-      await fetch(`/api/ordenes-compra/${numOC}/finalizar`, { method: "PUT" });
+    const finalizarOrden = async (numOC: number) => {
+      await fetch(`/api/ordenes/${numOC}/finalizar`, { method: "PUT" });
       // fetchOrdenes();
     };
-  }
 
   // Función para obtener órdenes de un artículo específico
   const fetchOrdenesArticulo = async (articuloId: number) => {
