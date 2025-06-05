@@ -425,7 +425,8 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
                   value={formData.stockSeguridadLF}
                   onChange={(e) => handleInputChange("stockSeguridadLF", Number(e.target.value))}
                   className="bg-gray-700 border-gray-600 text-white"
-                  required
+                  disabled={formData.modeloInventario === "INTERVALOFIJO"}
+                  required={formData.modeloInventario === "LOTEFIJO"}
                 />
               </div>
 
@@ -440,16 +441,17 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
                   value={formData.stockSeguridadIF}
                   onChange={(e) => handleInputChange("stockSeguridadIF", Number(e.target.value))}
                   className="bg-gray-700 border-gray-600 text-white"
-                  required
+                  disabled={formData.modeloInventario === "LOTEFIJO"}
+                  required={formData.modeloInventario === "INTERVALOFIJO"}
                 />
               </div>
             </div>
 
-            <div className="flex justify-end space-x-2">
+            <div className="flex justify-end space-x-2 text-white">
               <Button type="button" variant="ghost" onClick={onCancel} disabled={loading}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={loading}>
+              <Button className="bg-red-600 hover:bg-red-700" type="submit" disabled={loading || formData.stockActual <= 0}>
                 {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                 Guardar
               </Button>

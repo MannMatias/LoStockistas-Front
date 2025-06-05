@@ -304,7 +304,9 @@ export default function InventoryManagement() {
               <Button className="bg-white border-gray-700 text-gray-800 hover:bg-gray-700" onClick={() => window.location.href = '/ordenes-ventas'}>
                 Visualizar Ordenes
               </Button>
-
+              <Button className="bg-white border-gray-700 text-gray-800 hover:bg-gray-700" onClick={() => window.location.href = '/proveedores'}>
+                Visualizar Proveedores
+              </Button>
               <Button
                 onClick={() => setShowVentaForm(true)}
                 className="bg-red-600 hover:bg-red-700 text-white ml-auto"
