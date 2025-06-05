@@ -23,6 +23,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import { ArticuloForm } from "@/components/articulo-form"
+import { VentaForm } from "@/components/venta-form"
 import { OrdenCompraDialog } from "@/components/orden-compra-dialog"
 import { set } from "date-fns"
 
@@ -83,6 +84,7 @@ export default function InventoryManagement() {
   const [editingArticulo, setEditingArticulo] = useState<Articulo | null>(null)
   const [showOrdenCompra, setShowOrdenCompra] = useState(false)
   const [selectedArticulo, setSelectedArticulo] = useState<Articulo | null>(null)
+  const [showVentaForm, setShowVentaForm] = useState(false);
   const { toast } = useToast()
 
   // Función para obtener todos los artículos
@@ -112,19 +114,20 @@ export default function InventoryManagement() {
 
   // Función para obtener proveedores
   const fetchProveedores = async () => {
-try {
-  const response = await fetch(`${API_BASE_URL}/proveedores`); 
-  const text = await response.text();
-  setProveedores(JSON.parse(text));
-  try {
-    const data = JSON.parse(text);
-    // Usá data normalmente
-  } catch (err) {
-    console.error("JSON inválido:", text);
+    try {
+      const response = await fetch(`${API_BASE_URL}/proveedores`);
+      const text = await response.text();
+      setProveedores(JSON.parse(text));
+      try {
+        const data = JSON.parse(text);
+        // Usá data normalmente
+      } catch (err) {
+        console.error("JSON inválido:", text);
+      }
+    } catch (err) {
+      console.error("Error fetch:", err);
+    }
   }
-} catch (err) {
-  console.error("Error fetch:", err);
-}}
 
   // Función para eliminar artículo (baja lógica)
   const deleteArticulo = async (codArticulo: number) => {
@@ -258,6 +261,12 @@ try {
     fetchArticulos()
   }
 
+  const handleVentaSaved = () => {
+    setShowVentaForm(false)
+    fetchArticulos()
+  }
+
+
   const handleOrdenCompraCreated = () => {
     setShowOrdenCompra(false)
     setSelectedArticulo(null)
@@ -277,34 +286,42 @@ try {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-     {/* Header */}
-<header className="bg-gray-800 border-b border-gray-700">
-  <div className="container mx-auto px-4 py-4">
-    <div className="flex items-center justify-between">
-      <div className="flex items-center space-x-4">
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
-            <Package className="w-5 h-5 text-white" />
+      {/* Header */}
+      <header className="bg-gray-800 border-b border-gray-700">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
+                  <Package className="w-5 h-5 text-white" />
+                </div>
+                <h1 className="text-xl font-bold text-white">Gestión de Inventario</h1>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              {/* Botón que redirige a /ventordenes-as */}
+              <Button className="bg-white border-gray-700 text-gray-800 hover:bg-gray-700" onClick={() => window.location.href = '/ordenes-ventas'}>
+                Visualizar Ordenes
+              </Button>
+
+              <Button
+                onClick={() => setShowVentaForm(true)}
+                className="bg-red-600 hover:bg-red-700 text-white ml-auto"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Agregar Venta
+              </Button>
+
+              {/* Botón para agregar artículo */}
+              <Button className="bg-red-600 hover:bg-red-700" onClick={() => setShowArticuloForm(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Agregar Artículo
+              </Button>
+            </div>
           </div>
-          <h1 className="text-xl font-bold text-white">Gestión de Inventario</h1>
         </div>
-      </div>
-
-      <div className="flex items-center space-x-2">
-        {/* Botón que redirige a /ventordenes-as */}
-        <Button className="bg-white border-gray-700 text-gray-800 hover:bg-gray-700" onClick={() => window.location.href = '/ordenes-ventas' }>
-         Visualizar Ordenes
-        </Button>
-
-        {/* Botón para agregar artículo */}
-        <Button className="bg-red-600 hover:bg-red-700" onClick={() => setShowArticuloForm(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Agregar Artículo
-        </Button>
-      </div>
-    </div>
-  </div>
-</header>
+      </header>
       <div className="container mx-auto px-4 py-6">
         {/* Stats Cards */}
         <div className="flex flex-wrap gap-4 mb-6 justify-between" >
@@ -538,6 +555,17 @@ try {
           }}
         />
       )}
+
+      {/* Venta Form Modal */}
+      {
+        showVentaForm && (
+          <VentaForm
+            articulos={articulos}
+            onSuccess={handleVentaSaved}
+            onCancel={() => setShowVentaForm(false)}
+          />
+        )
+      }
 
       {/* Orden Compra Dialog */}
       {showOrdenCompra && selectedArticulo && (
