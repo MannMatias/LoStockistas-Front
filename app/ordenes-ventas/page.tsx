@@ -157,20 +157,65 @@ export default function ArticleOrdersSalesPage() {
     }
 
   }
-      const eliminarOrden = async (numOC: number) => {
-      await fetch(`/api/ordenes/${numOC}/cancelar`, { method: "DELETE" });
-      // fetchOrdenes(); // Recargá la lista si tenés esta función
-    };
+  const eliminarOrden = async (numOC: number) => {
+    try {
+      const response = await fetch(`/api/ordenes/${numOC}/cancelar`, {
+        method: "DELETE",
+      });
 
-    const marcarComoEnviada = async (numOC: number) => {
-      await fetch(`/api/ordenes/${numOC}/enviar`, { method: "PUT" });
-      // fetchOrdenes();
-    };
+      if (!response.ok) {
+        throw new Error("Error al eliminar la orden");
+      }
 
-    const finalizarOrden = async (numOC: number) => {
-      await fetch(`/api/ordenes/${numOC}/finalizar`, { method: "PUT" });
+      toast({
+        title: "Éxito",
+        description: "Orden cancelada correctamente",
+      });
+
+      fetchOrdenes(); // Recargá la lista si tenés esta función
+    } catch (error) {
+      console.error("Error al eliminar la orden:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar la orden",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const marcarComoEnviada = async (numOC: number) => {
+    try {
+      const response = await fetch(`/api/ordenes/${numOC}/enviar`, { method: "PUT" });
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
       // fetchOrdenes();
-    };
+    } catch (error) {
+      console.error("Error al marcar como enviada:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo marcar como enviada",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const finalizarOrden = async (numOC: number) => {
+    try {
+      const response = await fetch(`/api/ordenes/${numOC}/finalizar`, { method: "PUT" });
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      // fetchOrdenes();
+    } catch (error) {
+      console.error("Error al finalizar la orden:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo finalizar la orden",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Función para obtener órdenes de un artículo específico
   const fetchOrdenesArticulo = async (articuloId: number) => {
