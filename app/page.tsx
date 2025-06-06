@@ -70,6 +70,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/a
 export default function InventoryManagement() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedModelo, setSelectedModelo] = useState("Todos")
+  const [mostrarSoloCriticos, setMostrarSoloCriticos] = useState(false);
   const [articulos, setArticulos] = useState<Articulo[]>([])
   const [proveedores, setProveedores] = useState<Proveedor[]>([])
   const [loading, setLoading] = useState(true)
@@ -111,6 +112,31 @@ export default function InventoryManagement() {
       setLoading(false)
     }
   }
+
+  //Fetch artículos con stock crítico
+  const fetchArticulosCriticos = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_BASE_URL}/articulos/stock-critico`);
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      setArticulos(data);
+      updateStats(data);
+    } catch (error) {
+      console.error("Error fetching critical stock articulos:", error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los artículos con stock crítico",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Función para obtener proveedores
   const fetchProveedores = async () => {
@@ -390,7 +416,17 @@ export default function InventoryManagement() {
             />
           </div>
 
-          <Select value={selectedModelo} onValueChange={setSelectedModelo}>
+          <Select
+            value={selectedModelo}
+            onValueChange={(value) => {
+              if (value === "CRITICO") {
+                fetchArticulosCriticos();
+              } else {
+                setSelectedModelo(value);
+                fetchArticulos();
+              }
+            }}
+          >
             <SelectTrigger className="w-full sm:w-48 bg-gray-800 border-gray-700 text-white">
               <SelectValue placeholder="Modelo de Inventario" />
             </SelectTrigger>
@@ -403,6 +439,9 @@ export default function InventoryManagement() {
               </SelectItem>
               <SelectItem value="INTERVALOFIJO" className="text-white hover:bg-gray-700">
                 Intervalo Fijo
+              </SelectItem>
+              <SelectItem value="CRITICO" className="text-white hover:bg-gray-700">
+                Stock Crítico
               </SelectItem>
             </SelectContent>
           </Select>
@@ -489,8 +528,8 @@ export default function InventoryManagement() {
                     </div>
 
                     <div className="text-xs text-gray-400">
-                    <p>Proveedor: {articulo.proveedorPredeterminado ? articulo.proveedorPredeterminado.nombreProveedor : 'Sin Proveedor'}</p>
-                    <p>Modelo: {articulo.modeloInventario === "LOTEFIJO" ? "Lote Fijo" : "Intervalo Fijo"}</p>
+                      <p>Proveedor: {articulo.proveedorPredeterminado ? articulo.proveedorPredeterminado.nombreProveedor : 'Sin Proveedor'}</p>
+                      <p>Modelo: {articulo.modeloInventario === "LOTEFIJO" ? "Lote Fijo" : "Intervalo Fijo"}</p>
                     </div>
 
                     <div className="flex items-center justify-between">
