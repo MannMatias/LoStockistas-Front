@@ -23,6 +23,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import { ArticuloForm } from "@/components/articulo-form"
+import { ArticuloCreacion } from "@/components/articulo-creacion"
 import { VentaForm } from "@/components/venta-form"
 import { OrdenCompraDialog } from "@/components/orden-compra-dialog"
 import { set } from "date-fns"
@@ -81,6 +82,7 @@ export default function InventoryManagement() {
     valorTotalInventario: 0,
   })
   const [showArticuloForm, setShowArticuloForm] = useState(false)
+  const [showArticuloCreacion, setShowArticuloCreacion] = useState(false)
   const [editingArticulo, setEditingArticulo] = useState<Articulo | null>(null)
   const [showOrdenCompra, setShowOrdenCompra] = useState(false)
   const [selectedArticulo, setSelectedArticulo] = useState<Articulo | null>(null)
@@ -341,7 +343,7 @@ export default function InventoryManagement() {
               </Button>
 
               {/* Botón para agregar artículo */}
-              <Button className="bg-red-600 hover:bg-red-700" onClick={() => setShowArticuloForm(true)}>
+              <Button className="bg-red-600 hover:bg-red-700" onClick={() => setShowArticuloCreacion(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 Agregar Artículo
               </Button>
@@ -592,6 +594,15 @@ export default function InventoryManagement() {
           onCancel={() => {
             setShowArticuloForm(false)
             setEditingArticulo(null)
+          }}
+        />
+      )}
+
+      {showArticuloCreacion && (
+        <ArticuloCreacion
+          onSave={handleArticuloSaved}
+          onCancel={() => {
+            setShowArticuloCreacion(false)
           }}
         />
       )}

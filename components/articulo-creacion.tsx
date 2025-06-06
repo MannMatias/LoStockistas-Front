@@ -30,56 +30,38 @@ interface Articulo {
   nombreArt: string
   descripArt: string
   demandaAnual: number
-  costoAlmacenamiento: number
-  costoPedido: number
-  costoCompra: number
+  //costoAlmacenamiento: number
+  //costoPedido: number
+  //costoCompra: number
   stockActual: number
-  cgi: number
-  loteOptimo: number
-  puntoPedido: number
+  fechaHoraBajaArticulo?: string
+  //cgi: number
+  //loteOptimo: number
+  //puntoPedido: number
   inventarioMax: number
   stockSeguridad: number
   modeloInventario: "LOTEFIJO" | "INTERVALOFIJO"
-  proveedorPredeterminado?: Proveedor
-}
-
-interface ArticuloFormProps {
-  articulo?: Articulo | null
-  proveedores: Proveedor[]
-  onSave: () => void
-  onCancel: () => void
+  //proveedorPredeterminado: Proveedor
 }
 
 interface ArticuloCreacionFormProps {
   articulo?: Articulo | null
-  proveedores: Proveedor[]
   onSave: () => void
   onCancel: () => void
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
 
-export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: ArticuloFormProps) {
+export function ArticuloCreacion({ articulo, onSave, onCancel }: ArticuloCreacionFormProps) {
   const [formData, setFormData] = useState({
     nombreArt: "",
     descripArt: "",
-    demandaAnual: 0,
-    costoAlmacenamiento: 0,
-    costoPedido: 0,
-    costoCompra: 0,
-    stockActual: 0,
-    cgi: 0,
-    loteOptimo: 0,
-    puntoPedido: 0,
-    inventarioMax: 0,
-    stockSeguridad: 0,
+    demandaAnual: null,
+    stockActual: null,
+    inventarioMax: null,
+    stockSeguridad: null,
     modeloInventario: "LOTEFIJO" as "LOTEFIJO" | "INTERVALOFIJO",
-    proveedorPredeterminadoId: null as number | null,
   })
-
-
-
-
 
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
@@ -90,17 +72,10 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
         nombreArt: articulo.nombreArt,
         descripArt: articulo.descripArt,
         demandaAnual: articulo.demandaAnual,
-        costoAlmacenamiento: articulo.costoAlmacenamiento,
-        costoPedido: articulo.costoPedido,
-        costoCompra: articulo.costoCompra,
         stockActual: articulo.stockActual,
-        cgi: articulo.cgi,
-        loteOptimo: articulo.loteOptimo,
-        puntoPedido: articulo.puntoPedido,
         inventarioMax: articulo.inventarioMax,
         stockSeguridad: articulo.stockSeguridad,
         modeloInventario: articulo.modeloInventario,
-        proveedorPredeterminadoId: articulo.proveedorPredeterminado?.codProveedor ?? null,
       })
     }
   }, [articulo])
@@ -116,15 +91,12 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
     const method = articulo ? "PUT" : "POST"
 
     let payload: any = {
-      nombreArt: formData.nombreArt,
-      descripArt: formData.descripArt,
-      demandaAnual: formData.demandaAnual,
-      stockActual: formData.stockActual,
-      inventarioMax: formData.inventarioMax,
-      stockSeguridad: formData.stockSeguridad,
-      modeloInventario: formData.modeloInventario,
-      proveedorPredeterminadoId: formData.proveedorPredeterminadoId,
+      ...formData,
     }
+
+    // Eliminar campo auxiliar
+    delete payload.proveedorPredeterminadoId
+
 
 
     const response = await fetch(url, {
@@ -198,7 +170,7 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
 
                 <div className="space-y-2">
                   <Label htmlFor="modeloInventario" className="text-white">
-                    Modelo de Inventario  <span className="text-red-500">*</span>
+                    Modelo de Inventario <span className="text-red-500">*</span>
                   </Label>
                   <Select
                     value={formData.modeloInventario}
@@ -221,7 +193,7 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
 
               <div className="space-y-2">
                 <Label htmlFor="descripArt" className="text-white">
-                  Descripción  <span className="text-red-500">*</span>
+                  Descripción <span className="text-red-500">*</span>
                 </Label>
                 <Textarea
                   id="descripArt"
@@ -231,44 +203,13 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
                   rows={3}
                 />
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="proveedorPredeterminadoId" className="text-white">
-                  Proveedor Predeterminado  <span className="text-red-500">*</span>
-                </Label>
-                  <Select 
-                    value={formData.proveedorPredeterminadoId !== null
-                      ? String(formData.proveedorPredeterminadoId)
-                      : "none"}
-                    onValueChange={(value) => {
-                      setFormData((prev) => ({
-                        ...prev,
-                        proveedorPredeterminadoId: value === "none" ? null : Number(value),
-                      }));
-                    }}
-                    required
-                  >
-                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white">Proveedor</SelectTrigger> 
-
-                    
-                    <SelectContent className="bg-gray-700 border-gray-600 text-white">
-                      <SelectItem value="none">-- Ninguno --</SelectItem>
-                      {proveedores.map((p) => (
-                        <SelectItem key={p.codProveedor} value={String(p.codProveedor)}>
-                          {p.nombreProveedor}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-              </div>
             </div>
 
             {/* Costos y Stock */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="demandaAnual" className="text-white">
-                  Demanda Anual  <span className="text-red-500">*</span>
+                  Demanda Anual <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="demandaAnual"
@@ -280,9 +221,10 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
                   required
                 />
               </div>
-                            <div className="space-y-2">
+              
+              <div className="space-y-2">
                 <Label htmlFor="stockActual" className="text-white">
-                  Stock Actual  <span className="text-red-500">*</span>
+                  Stock Actual <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="stockActual"
@@ -294,10 +236,9 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
                   required
                 />
               </div>
-              
-               <div className="space-y-2">
+                            <div className="space-y-2">
                 <Label htmlFor="inventarioMax" className="text-white">
-                  Inventario Máximo  <span className="text-red-500">*</span>
+                  Inventario Máximo <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="inventarioMax"
@@ -305,16 +246,18 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
                   min={0}
                   value={formData.inventarioMax}
                   onChange={(e) => handleInputChange("inventarioMax", Number(e.target.value))}
-                  className="bg-gray-700 border-gray-600 text-white"
+                  className="bg-gray-700 border-gray-600 text-white "
                   required
-                  
                 />
-              </div>
-              
+                </div>
             </div>
-              <div className="space-y-2">
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+
+                <div className="space-y-2 ">
                 <Label htmlFor="stockSeguridad" className="text-white">
-                  Stock Seguridad  <span className="text-red-500">*</span>
+                  Stock Seguridad <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="stockSeguridad"
@@ -322,113 +265,14 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
                   min={0}
                   value={formData.stockSeguridad}
                   onChange={(e) => handleInputChange("stockSeguridad", Number(e.target.value))}
-                  className="bg-gray-700 border-gray-600 text-white"
-                />
-              </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="costoCompra" className="text-white">
-                  Costo Compra
-                </Label>
-                <Input
-                  id="costoCompra"
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  value={formData.costoCompra}
-                  onChange={(e) => handleInputChange("costoCompra", Number(e.target.value))}
-                  className="bg-gray-700 border-gray-600 text-white"
-                  required
-                  disabled
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="cgi" className="text-white">
-                  CGI
-                </Label>
-                <Input
-                  id="cgi"
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  value={formData.cgi}
-                  onChange={(e) => handleInputChange("cgi", Number(e.target.value))}
-                  className="bg-gray-700 border-gray-600 text-white"
-                  required
-                  disabled
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="costoAlmacenamiento" className="text-white">
-                  Costo Almacenamiento
-                </Label>
-                <Input
-                  id="costoAlmacenamiento"
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  value={formData.costoAlmacenamiento}
-                  onChange={(e) => handleInputChange("costoAlmacenamiento", Number(e.target.value))}
-                  className="bg-gray-700 border-gray-600 text-white"
-                  required
-                  disabled
+                  className="bg-gray-700 border-gray-600 text-white flex-justify-center "
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="loteOptimo" className="text-white">
-                  Lote Óptimo
-                </Label>
-                <Input
-                  id="loteOptimo"
-                  type="number"
-                  min={0}
-                  value={formData.loteOptimo}
-                  onChange={(e) => handleInputChange("loteOptimo", Number(e.target.value))}
-                  className="bg-gray-700 border-gray-600 text-white"
-                  required
-                  disabled
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="puntoPedido" className="text-white">
-                  Punto de Pedido
-                </Label>
-                <Input
-                  id="puntoPedido"
-                  type="number"
-                  min={0}
-                  value={formData.puntoPedido}
-                  onChange={(e) => handleInputChange("puntoPedido", Number(e.target.value))}
-                  className="bg-gray-700 border-gray-600 text-white"
-                  required
-                  disabled
-                />
-              </div>
-             <div className="space-y-2">
-                <Label htmlFor="costoPedido" className="text-white">
-                  Costo Pedido
-                </Label>
-                <Input
-                  id="costoPedido"
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  value={formData.costoPedido}
-                  onChange={(e) => handleInputChange("costoPedido", Number(e.target.value))}
-                  className="bg-gray-700 border-gray-600 text-white"
-                  required
-                  disabled
-                />
-              </div>
-            </div>
+           
 
-
-
-
+              
 
 
             <div className="flex justify-end space-x-2 text-white">
@@ -436,7 +280,7 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
                 Cancelar
               </Button>
               <Button className="bg-red-600 hover:bg-red-700" type="submit" disabled={loading || formData.stockActual <= 0}>
-                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> :  <Save className="mr-2 h-4 w-4" />}
+                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                 Guardar
               </Button>
             </div>
