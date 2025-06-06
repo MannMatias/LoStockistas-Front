@@ -50,8 +50,7 @@ interface Articulo {
   loteOptimo: number
   puntoPedido: number
   inventarioMax: number
-  stockSeguridadLF: number
-  stockSeguridadIF: number
+  stockSeguridad: number
   modeloInventario: "LOTEFIJO" | "INTERVALOFIJO"
   proveedorPredeterminado: Proveedor
 }
@@ -65,7 +64,7 @@ interface InventoryStats {
 }
 
 // Configuración de la API
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
 
 export default function InventoryManagement() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -217,7 +216,7 @@ export default function InventoryManagement() {
   const getStockStatus = (articulo: Articulo): "normal" | "bajo" | "critico" | "sin-stock" => {
     if (articulo.stockActual === 0) return "sin-stock"
     if (articulo.stockActual <= articulo.puntoPedido) return "critico"
-    if (articulo.stockActual <= articulo.puntoPedido * 1.5) return "bajo"
+    if (articulo.stockActual <= articulo.stockSeguridad) return "bajo"
     return "normal"
   }
 
@@ -441,7 +440,7 @@ export default function InventoryManagement() {
                 Intervalo Fijo
               </SelectItem>
               <SelectItem value="CRITICO" className="text-white hover:bg-gray-700">
-                Stock Crítico
+                Stock Bajo
               </SelectItem>
             </SelectContent>
           </Select>

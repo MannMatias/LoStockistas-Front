@@ -47,7 +47,7 @@ interface Articulo {
   stockSeguridadLF: number
   stockSeguridadIF: number
   modeloInventario: "LOTEFIJO" | "INTERVALOFIJO"
-  proveedorPredeterminado: Proveedor
+  proveedorPredeterminado?: Proveedor | null
 }
 
 interface EstadoOC {
@@ -634,7 +634,7 @@ export default function ArticleOrdersSalesPage() {
                         </div>
 
                         <div className="text-xs text-gray-400">
-                          <p>Proveedor: {articulo.proveedorPredeterminado.nombreProveedor}</p>
+                          <p>Proveedor: {articulo.proveedorPredeterminado?.nombreProveedor ?? 'Sin Proveedor'}</p>
                           <p>Modelo: {articulo.modeloInventario === "LOTEFIJO" ? "Lote Fijo" : "Intervalo Fijo"}</p>
                         </div>
 
@@ -708,7 +708,7 @@ export default function ArticleOrdersSalesPage() {
                     <div className="text-right">
                       <p className="text-lg font-bold text-red-400">{formatPrice(selectedArticle.costoCompra)}</p>
                       <p className="text-sm text-gray-400">
-                        Proveedor: {selectedArticle.proveedorPredeterminado.nombreProveedor}
+                        Proveedor: {selectedArticle.proveedorPredeterminado?.nombreProveedor ?? 'Sin Proveedor'}
                       </p>
                     </div>
                   </div>
@@ -929,7 +929,7 @@ export default function ArticleOrdersSalesPage() {
                     <div className="text-right">
                       <p className="text-lg font-bold text-red-400">{formatPrice(selectedArticle.costoCompra)}</p>
                       <p className="text-sm text-gray-400">
-                        Proveedor: {selectedArticle.proveedorPredeterminado.nombreProveedor}
+                        Proveedor: {selectedArticle.proveedorPredeterminado?.nombreProveedor ?? 'Sin Proveedor'}
                       </p>
                     </div>
                   </div>

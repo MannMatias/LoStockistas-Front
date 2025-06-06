@@ -230,7 +230,7 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
                 <Label htmlFor="proveedorPredeterminadoId" className="text-white">
                   Proveedor Predeterminado
                 </Label>
-                  <Select
+                  <Select 
                     value={formData.proveedorPredeterminadoId !== null
                       ? String(formData.proveedorPredeterminadoId)
                       : "none"}
@@ -241,8 +241,10 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
                       }));
                     }}
                   >
-                    <SelectTrigger>Proveedor</SelectTrigger>
-                    <SelectContent>
+                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white">Proveedor</SelectTrigger> 
+
+                    
+                    <SelectContent className="bg-gray-700 border-gray-600 text-white">
                       <SelectItem value="none">-- Ninguno --</SelectItem>
                       {proveedores.map((p) => (
                         <SelectItem key={p.codProveedor} value={String(p.codProveedor)}>
@@ -405,7 +407,7 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
                   id="stockSeguridad"
                   type="number"
                   min={0}
-                  value={formData.stockSeguridadIF}
+                  value={formData.stockSeguridad}
                   onChange={(e) => handleInputChange("stockSeguridad", Number(e.target.value))}
                   className="bg-gray-700 border-gray-600 text-white"
                 />
