@@ -272,9 +272,11 @@ export default function InventoryManagement() {
     }
   }
 
-  const formatPrice = (price: number) => {
-    return `$${price.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`
-  }
+    const formatPrice = (price: number | null) => {
+    const actualPrice = price ?? 0; 
+    return `$${actualPrice.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`;
+}
+
 
   // Cargar datos al montar el componente
   useEffect(() => {

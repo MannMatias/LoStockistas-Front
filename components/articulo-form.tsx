@@ -74,7 +74,7 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
     inventarioMax: 0,
     stockSeguridad: 0,
     modeloInventario: "LOTEFIJO" as "LOTEFIJO" | "INTERVALOFIJO",
-    proveedorPredeterminadoId: null as number | null,
+    proveedorPredeterminado: null as Proveedor | null,
   })
 
 
@@ -100,7 +100,7 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
         inventarioMax: articulo.inventarioMax,
         stockSeguridad: articulo.stockSeguridad,
         modeloInventario: articulo.modeloInventario,
-        proveedorPredeterminadoId: articulo.proveedorPredeterminado?.codProveedor ?? null,
+        proveedorPredeterminado: articulo.proveedorPredeterminado ?? null,
       })
     }
   }, [articulo])
@@ -123,7 +123,7 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
       inventarioMax: formData.inventarioMax,
       stockSeguridad: formData.stockSeguridad,
       modeloInventario: formData.modeloInventario,
-      proveedorPredeterminadoId: formData.proveedorPredeterminadoId,
+      proveedorPredeterminado: formData.proveedorPredeterminado,
     }
 
 
@@ -236,18 +236,17 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
                 <Label htmlFor="proveedorPredeterminadoId" className="text-white">
                   Proveedor Predeterminado  <span className="text-red-500">*</span>
                 </Label>
-                  <Select 
-                    value={formData.proveedorPredeterminadoId !== null
-                      ? String(formData.proveedorPredeterminadoId)
-                      : "none"}
-                    onValueChange={(value) => {
-                      setFormData((prev) => ({
-                        ...prev,
-                        proveedorPredeterminadoId: value === "none" ? null : Number(value),
-                      }));
-                    }}
-                    required
-                  >
+<Select
+  value={formData.proveedorPredeterminado ? String(formData.proveedorPredeterminado.codProveedor) : "none"}
+  onValueChange={(value) => {
+    const selectedProveedor = value === "none" ? null : proveedores.find(p => String(p.codProveedor) === value) || null;
+    setFormData((prev) => ({
+      ...prev,
+      proveedorPredeterminado: selectedProveedor,
+    }));
+  }}
+  required
+>
                     <SelectTrigger className="bg-gray-700 border-gray-600 text-white">Proveedor</SelectTrigger> 
 
                     
