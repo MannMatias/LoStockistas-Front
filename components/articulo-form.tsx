@@ -38,10 +38,9 @@ interface Articulo {
   loteOptimo: number
   puntoPedido: number
   inventarioMax: number
-  stockSeguridadLF: number
-  stockSeguridadIF: number
+  stockSeguridad: number
   modeloInventario: "LOTEFIJO" | "INTERVALOFIJO"
-  proveedorPredeterminado: Proveedor
+  proveedorPredeterminado?: Proveedor
 }
 
 interface ArticuloFormProps {
@@ -66,10 +65,9 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
     loteOptimo: 0,
     puntoPedido: 0,
     inventarioMax: 0,
-    stockSeguridadLF: 0,
-    stockSeguridadIF: 0,
+    stockSeguridad: 0,
     modeloInventario: "LOTEFIJO" as "LOTEFIJO" | "INTERVALOFIJO",
-    proveedorPredeterminadoId: 0,
+    proveedorPredeterminadoId: null as number | null,
   })
 
   const [loading, setLoading] = useState(false)
@@ -89,85 +87,68 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
         loteOptimo: articulo.loteOptimo,
         puntoPedido: articulo.puntoPedido,
         inventarioMax: articulo.inventarioMax,
-        stockSeguridadLF: articulo.stockSeguridadLF,
-        stockSeguridadIF: articulo.stockSeguridadIF,
+        stockSeguridad: articulo.stockSeguridad,
         modeloInventario: articulo.modeloInventario,
-        proveedorPredeterminadoId: articulo.proveedorPredeterminado.codProveedor,
+        proveedorPredeterminadoId: articulo.proveedorPredeterminado?.codProveedor ?? null,
       })
     }
   }, [articulo])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault()
+  setLoading(true)
 
-    try {
-      const url = articulo
-        ? `${API_BASE_URL}/articulos/${articulo.codArticulo}`
-        : `${API_BASE_URL}/articulos`
+  try {
+    const url = articulo
+      ? `${API_BASE_URL}/articulos/${articulo.codArticulo}`
+      : `${API_BASE_URL}/articulos`
+    const method = articulo ? "PUT" : "POST"
 
-      const method = articulo ? "PUT" : "POST"
+    let payload: any = {
+      ...formData,
+    }
 
-      // Encontrar el proveedor completo para enviarlo como objeto
+    // Eliminar campo auxiliar
+    delete payload.proveedorPredeterminadoId
+
+    if (formData.proveedorPredeterminadoId != null) {
       const proveedorSeleccionado = proveedores.find(
         (p) => p.codProveedor === formData.proveedorPredeterminadoId
       )
 
-      if (!proveedorSeleccionado) {
-        toast({
-          title: "Error",
-          description: "Debe seleccionar un proveedor válido",
-          variant: "destructive",
-        })
-        setLoading(false)
-        return
+      if (proveedorSeleccionado) {
+        payload.proveedorPredeterminado = proveedorSeleccionado
       }
-
-      const payload = {
-        ...formData,
-        proveedorPredeterminado: {
-          codProveedor: proveedorSeleccionado.codProveedor,
-          nombreProveedor: proveedorSeleccionado.nombreProveedor,
-          direccionProveedor: proveedorSeleccionado.direccionProveedor,
-          telefonoProveedor: proveedorSeleccionado.telefonoProveedor,
-          emailProveedor: proveedorSeleccionado.emailProveedor,
-        },
-      }
-
-      // Eliminar el campo proveedorPredeterminadoId para evitar confusión
- //     delete payload.proveedorPredeterminadoId
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      })
-
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`)
-      }
-
-      toast({
-        title: "Éxito",
-        description: articulo
-          ? "Artículo actualizado correctamente"
-          : "Artículo creado correctamente",
-      })
-
-      onSave()
-    } catch (error) {
-      console.error("Error saving articulo:", error)
-      toast({
-        title: "Error",
-        description: "No se pudo guardar el artículo",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
     }
+
+    const response = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    })
+
+    if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`)
+
+    toast({
+      title: "Éxito",
+      description: articulo
+        ? "Artículo actualizado correctamente"
+        : "Artículo creado correctamente",
+    })
+
+    onSave()
+  } catch (error) {
+    console.error("Error saving articulo:", error)
+    toast({
+      title: "Error",
+      description: "No se pudo guardar el artículo",
+      variant: "destructive",
+    })
+  } finally {
+    setLoading(false)
   }
+}
+
 
   const handleInputChange = (field: string, value: string | number) => {
     setFormData((prev) => ({
@@ -249,27 +230,28 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
                 <Label htmlFor="proveedorPredeterminadoId" className="text-white">
                   Proveedor Predeterminado
                 </Label>
-                <Select
-                  value={formData.proveedorPredeterminadoId.toString()}
-                  onValueChange={(value) =>
-                    handleInputChange("proveedorPredeterminadoId", Number.parseInt(value))
-                  }
-                >
-                  <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                    <SelectValue placeholder="Seleccionar proveedor" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-700 border-gray-600">
-                    {proveedores.map((proveedor) => (
-                      <SelectItem
-                        key={proveedor.codProveedor}
-                        value={proveedor.codProveedor.toString()}
-                        className="text-white hover:bg-gray-600"
-                      >
-                        {proveedor.nombreProveedor}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <Select
+                    value={formData.proveedorPredeterminadoId !== null
+                      ? String(formData.proveedorPredeterminadoId)
+                      : "none"}
+                    onValueChange={(value) => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        proveedorPredeterminadoId: value === "none" ? null : Number(value),
+                      }));
+                    }}
+                  >
+                    <SelectTrigger>Proveedor</SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">-- Ninguno --</SelectItem>
+                      {proveedores.map((p) => (
+                        <SelectItem key={p.codProveedor} value={String(p.codProveedor)}>
+                          {p.nombreProveedor}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
               </div>
             </div>
 
@@ -413,39 +395,22 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="stockSeguridadLF" className="text-white">
-                  Stock Seguridad Lote Fijo
-                </Label>
-                <Input
-                  id="stockSeguridadLF"
-                  type="number"
-                  min={0}
-                  value={formData.stockSeguridadLF}
-                  onChange={(e) => handleInputChange("stockSeguridadLF", Number(e.target.value))}
-                  className="bg-gray-700 border-gray-600 text-white"
-                  disabled={formData.modeloInventario === "INTERVALOFIJO"}
-                  required={formData.modeloInventario === "LOTEFIJO"}
-                />
-              </div>
+
 
               <div className="space-y-2">
-                <Label htmlFor="stockSeguridadIF" className="text-white">
-                  Stock Seguridad Intervalo Fijo
+                <Label htmlFor="stockSeguridad" className="text-white">
+                  Stock Seguridad
                 </Label>
                 <Input
-                  id="stockSeguridadIF"
+                  id="stockSeguridad"
                   type="number"
                   min={0}
                   value={formData.stockSeguridadIF}
-                  onChange={(e) => handleInputChange("stockSeguridadIF", Number(e.target.value))}
+                  onChange={(e) => handleInputChange("stockSeguridad", Number(e.target.value))}
                   className="bg-gray-700 border-gray-600 text-white"
-                  disabled={formData.modeloInventario === "LOTEFIJO"}
-                  required={formData.modeloInventario === "INTERVALOFIJO"}
                 />
               </div>
-            </div>
+
 
             <div className="flex justify-end space-x-2 text-white">
               <Button type="button" variant="ghost" onClick={onCancel} disabled={loading}>

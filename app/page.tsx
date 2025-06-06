@@ -489,8 +489,8 @@ export default function InventoryManagement() {
                     </div>
 
                     <div className="text-xs text-gray-400">
-                      <p>Proveedor: {articulo.proveedorPredeterminado.nombreProveedor}</p>
-                      <p>Modelo: {articulo.modeloInventario === "LOTEFIJO" ? "Lote Fijo" : "Intervalo Fijo"}</p>
+                    <p>Proveedor: {articulo.proveedorPredeterminado ? articulo.proveedorPredeterminado.nombreProveedor : 'Sin Proveedor'}</p>
+                    <p>Modelo: {articulo.modeloInventario === "LOTEFIJO" ? "Lote Fijo" : "Intervalo Fijo"}</p>
                     </div>
 
                     <div className="flex items-center justify-between">
