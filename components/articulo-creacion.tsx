@@ -56,10 +56,10 @@ export function ArticuloCreacion({ articulo, onSave, onCancel }: ArticuloCreacio
   const [formData, setFormData] = useState({
     nombreArt: "",
     descripArt: "",
-    demandaAnual: null,
-    stockActual: null,
-    inventarioMax: null,
-    stockSeguridad: null,
+    demandaAnual: 0,
+    stockActual: 0,
+    inventarioMax: 0,
+    stockSeguridad: 0,
     modeloInventario: "LOTEFIJO" as "LOTEFIJO" | "INTERVALOFIJO",
   })
 
