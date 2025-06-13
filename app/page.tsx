@@ -26,6 +26,8 @@ import { ArticuloForm } from "@/components/articulo-form"
 import { ArticuloCreacion } from "@/components/articulo-creacion"
 import { VentaForm } from "@/components/venta-form"
 import { OrdenCompraDialog } from "@/components/orden-compra-dialog"
+
+import  OrdenForm  from "@/components/orden-form"
 import { set } from "date-fns"
 
 
@@ -87,6 +89,7 @@ export default function InventoryManagement() {
   const [showOrdenCompra, setShowOrdenCompra] = useState(false)
   const [selectedArticulo, setSelectedArticulo] = useState<Articulo | null>(null)
   const [showVentaForm, setShowVentaForm] = useState(false);
+  const [showOrdenForm, setShowOrdenForm] = useState(false);
   const { toast } = useToast()
 
   // Función para obtener todos los artículos
@@ -273,6 +276,8 @@ export default function InventoryManagement() {
   }
 
   const formatPrice = (price: number) => {
+if (price === null) return "$0"
+
     return `$${price.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`
   }
 
@@ -293,6 +298,11 @@ export default function InventoryManagement() {
     fetchArticulos()
   }
 
+  const handleOrdenFormCreated = () => {
+    setShowOrdenForm(false)
+    setSelectedArticulo(null)
+    fetchArticulos()
+  }
 
   const handleOrdenCompraCreated = () => {
     setShowOrdenCompra(false)
@@ -341,6 +351,17 @@ export default function InventoryManagement() {
                 <Plus className="w-4 h-4 mr-2" />
                 Agregar Venta
               </Button>
+
+
+               <Button
+                onClick={() => setShowOrdenForm(true)}
+                className="bg-red-600 hover:bg-red-700 text-white ml-auto"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Agregar Orden
+              </Button>
+
+
 
               {/* Botón para agregar artículo */}
               <Button className="bg-red-600 hover:bg-red-700" onClick={() => setShowArticuloCreacion(true)}>
@@ -617,6 +638,17 @@ export default function InventoryManagement() {
           />
         )
       }
+
+
+      {
+        showOrdenForm && (
+          <OrdenForm
+            articulos={articulos}
+            onClose={handleOrdenFormCreated}
+          />
+        )
+      }
+
 
       {/* Orden Compra Dialog */}
       {showOrdenCompra && selectedArticulo && (

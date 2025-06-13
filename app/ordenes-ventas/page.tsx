@@ -494,6 +494,7 @@ export default function ArticleOrdersSalesPage() {
   }
 
   const formatPrice = (price: number) => {
+    if (price === null) return "$0"
     return `$${price.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`
   }
 
