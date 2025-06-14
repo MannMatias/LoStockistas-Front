@@ -11,14 +11,30 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 
-
-
 interface Articulo {
   codArticulo: number
   nombreArt: string
   descripArt: string
-  stockActual: number
+  demandaAnual: number
+  costoAlmacenamiento: number
+  costoPedido: number
   costoCompra: number
+  stockActual: number
+  fechaHoraBajaArticulo: string | null
+  loteOptimo: number
+  puntoPedido: number
+  inventarioMax: number
+  stockSeguridad: number
+  modeloInventario: string
+  proveedorPredeterminado: {
+    codProveedor: number
+    nombreProveedor: string
+    direccionProveedor: string
+    telefonoProveedor: string
+    emailProveedor: string
+    fechaHoraBajaProveedor: string | null
+  }
+  cgi: number
 }
 
 interface OrdenFormProps {
@@ -32,7 +48,6 @@ export default function OrdenForm({ onClose, articulos: propArticulos }: OrdenFo
   const [formData, setFormData] = useState({
     codArticulo: "",
     cantidad: 1,
-    codProveedor: "",
   })
   const [articulos, setArticulos] = useState<Articulo[]>(propArticulos || [])
   const [selectedArticulo, setSelectedArticulo] = useState<Articulo | null>(null)
@@ -60,7 +75,7 @@ export default function OrdenForm({ onClose, articulos: propArticulos }: OrdenFo
   const fetchArticulos = async () => {
     try {
       setFetchingArticulos(true)
-      const response = await fetch(`${API_BASE_URL}/articulos`)
+      const response = await fetch(`${API_BASE_URL}/articulos/con-proveedor`)
       if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`)
       const data = await response.json()
       setArticulos(data.filter((a: Articulo) => a.stockActual > 0))
@@ -76,6 +91,10 @@ export default function OrdenForm({ onClose, articulos: propArticulos }: OrdenFo
     }
   }
 
+  if (loading) {
+    return <div>Cargando artículos...</div>
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedArticulo) {
@@ -86,7 +105,6 @@ export default function OrdenForm({ onClose, articulos: propArticulos }: OrdenFo
       })
       return
     }
-
     if (formData.cantidad <= 0) {
       toast({
         title: "Error",
@@ -95,7 +113,6 @@ export default function OrdenForm({ onClose, articulos: propArticulos }: OrdenFo
       })
       return
     }
-
 
     setLoading(true)
 
@@ -134,9 +151,7 @@ export default function OrdenForm({ onClose, articulos: propArticulos }: OrdenFo
     const articulo = articulos.find((a) => a.codArticulo === Number.parseInt(value))
     setSelectedArticulo(articulo || null)
   }
-  const handleProveedorChange = (value: string) => {
-    setFormData((prev) => ({ ...prev, codProveedor: value }))
-  }
+
   const handleInputChange = (field: string, value: string | number) => {
     setFormData((prev) => ({
       ...prev,
@@ -196,8 +211,15 @@ export default function OrdenForm({ onClose, articulos: propArticulos }: OrdenFo
                       <span className="font-semibold">Stock disponible:</span> {selectedArticulo.stockActual}
                     </p>
                     <p className="text-gray-300">
+                      <span className="font-semibold">Proveedor:</span>{" "}
+                      {selectedArticulo.proveedorPredeterminado.nombreProveedor}
+                    </p>
+                    <p className="text-gray-300">
                       <span className="font-semibold">Precio unitario:</span> $
-                      {selectedArticulo.costoCompra.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+                      
+                      {
+
+                      selectedArticulo.costoCompra.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
                     </p>
                   </div>
                 )}
@@ -216,16 +238,11 @@ export default function OrdenForm({ onClose, articulos: propArticulos }: OrdenFo
                     required
                   />
                 </div>
-              
-
-
 
                 {selectedArticulo && formData.cantidad > 0 && (
                   <div className="p-3 bg-gray-700 rounded-md">
                     <p className="text-white font-semibold">
                       Total: $
-
-
                       {(selectedArticulo.costoCompra * formData.cantidad).toLocaleString("es-AR", {
                         minimumFractionDigits: 2,
                       })}
