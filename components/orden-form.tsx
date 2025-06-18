@@ -1,9 +1,8 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
-import { X, Save, Loader2, ShoppingCart } from "lucide-react"
+import { X, Save, Loader2, ShoppingCart, Package, DollarSign } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -62,16 +61,6 @@ export default function OrdenForm({ onClose, articulos: propArticulos }: OrdenFo
     }
   }, [propArticulos])
 
-  // Actualizar precio cuando se selecciona un artículo
-  useEffect(() => {
-    if (selectedArticulo) {
-      setFormData((prev) => ({
-        ...prev,
-        precioUnitario: selectedArticulo.costoCompra,
-      }))
-    }
-  }, [selectedArticulo])
-
   const fetchArticulos = async () => {
     try {
       setFetchingArticulos(true)
@@ -89,10 +78,6 @@ export default function OrdenForm({ onClose, articulos: propArticulos }: OrdenFo
     } finally {
       setFetchingArticulos(false)
     }
-  }
-
-  if (loading) {
-    return <div>Cargando artículos...</div>
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -135,10 +120,10 @@ export default function OrdenForm({ onClose, articulos: propArticulos }: OrdenFo
 
       onClose()
     } catch (error) {
-      console.error("Error registering sale:", error)
+      console.error("Error registering order:", error)
       toast({
         title: "Error",
-        description: "No se pudo registrar la Orden",
+        description: "No se pudo registrar la orden",
         variant: "destructive",
       })
     } finally {
@@ -160,42 +145,55 @@ export default function OrdenForm({ onClose, articulos: propArticulos }: OrdenFo
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <Card className="bg-gray-800 border-gray-700 w-full max-w-md">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <CardTitle className="text-white flex items-center">
-            <ShoppingCart className="w-5 h-5 mr-2 text-red-500" />
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <Card className="bg-gray-800/95 backdrop-blur-md border-gray-700/50 w-full max-w-lg shadow-2xl">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6 border-b border-gray-700/50">
+          <CardTitle className="text-xl font-bold text-white flex items-center">
+            <div className="w-8 h-8 bg-gradient-to-r from-red-600 to-red-700 rounded-lg flex items-center justify-center mr-3">
+              <ShoppingCart className="w-4 h-4 text-white" />
+            </div>
             Registrar Orden
           </CardTitle>
-          <Button variant="ghost" size="sm" onClick={onClose} className="text-gray-400 hover:text-white">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-full"
+          >
             <X className="h-4 w-4" />
           </Button>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="p-6">
           {fetchingArticulos ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-red-500" />
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="relative">
+                <div className="w-12 h-12 border-4 border-gray-300 border-t-red-600 rounded-full animate-spin mb-4"></div>
+              </div>
+              <p className="text-gray-400">Cargando artículos...</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="articulo" className="text-white">
-                    Artículo <span className="text-red-500">*</span>
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <Label htmlFor="articulo" className="text-gray-300 font-medium">
+                    Artículo <span className="text-red-400">*</span>
                   </Label>
                   <Select value={formData.codArticulo} onValueChange={handleArticuloChange} required>
-                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                    <SelectTrigger className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12">
                       <SelectValue placeholder="Seleccionar artículo" />
                     </SelectTrigger>
-                    <SelectContent className="bg-gray-700 border-gray-600 text-white">
+                    <SelectContent className="bg-gray-800 border-gray-700 backdrop-blur-md">
                       {articulos.map((articulo) => (
                         <SelectItem
                           key={articulo.codArticulo}
                           value={articulo.codArticulo.toString()}
-                          className="text-white hover:bg-gray-600"
+                          className="text-white hover:bg-gray-700/50 focus:bg-gray-700/50"
                         >
-                          {articulo.nombreArt} - Stock: {articulo.stockActual}
+                          <div className="flex justify-between items-center w-full">
+                            <span>{articulo.nombreArt}</span>
+                            <span className="text-gray-400 text-sm ml-2">Stock: {articulo.stockActual}</span>
+                          </div>
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -203,59 +201,96 @@ export default function OrdenForm({ onClose, articulos: propArticulos }: OrdenFo
                 </div>
 
                 {selectedArticulo && (
-                  <div className="p-3 bg-gray-700 rounded-md text-sm">
-                    <p className="text-gray-300">
-                      <span className="font-semibold">Descripción:</span> {selectedArticulo.descripArt}
-                    </p>
-                    <p className="text-gray-300">
-                      <span className="font-semibold">Stock disponible:</span> {selectedArticulo.stockActual}
-                    </p>
-                    <p className="text-gray-300">
-                      <span className="font-semibold">Proveedor:</span>{" "}
-                      {selectedArticulo.proveedorPredeterminado.nombreProveedor}
-                    </p>
-                    <p className="text-gray-300">
-                      <span className="font-semibold">Precio unitario:</span> $
-                      
-                      {
+                  <div className="bg-gray-700/30 backdrop-blur-sm rounded-xl p-4 space-y-3">
+                    <div className="flex items-center space-x-2 pb-2 border-b border-gray-600/30">
+                      <div className="w-5 h-5 bg-blue-600/20 rounded flex items-center justify-center">
+                        <Package className="w-3 h-3 text-blue-400" />
+                      </div>
+                      <span className="text-white font-medium">Detalles del Artículo</span>
+                    </div>
 
-                      selectedArticulo.costoCompra.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
-                    </p>
+                    <div className="grid grid-cols-1 gap-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Descripción:</span>
+                        <span className="text-white">{selectedArticulo.descripArt}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Stock disponible:</span>
+                        <span className="text-green-400 font-semibold">{selectedArticulo.stockActual}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Proveedor:</span>
+                        <span className="text-white">{selectedArticulo.proveedorPredeterminado.nombreProveedor}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Precio unitario:</span>
+                        <span className="text-white font-semibold">
+                          ${selectedArticulo.costoCompra.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 )}
 
-                <div className="space-y-2">
-                  <Label htmlFor="cantidad" className="text-white">
-                    Cantidad <span className="text-red-500">*</span>
+                <div className="space-y-3">
+                  <Label htmlFor="cantidad" className="text-gray-300 font-medium">
+                    Cantidad <span className="text-red-400">*</span>
                   </Label>
                   <Input
                     id="cantidad"
                     type="number"
                     min={1}
+                    max={selectedArticulo?.stockActual || undefined}
                     value={formData.cantidad}
                     onChange={(e) => handleInputChange("cantidad", Number.parseInt(e.target.value))}
-                    className="bg-gray-700 border-gray-600 text-white"
+                    className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12"
                     required
                   />
+                  {selectedArticulo && (
+                    <p className="text-xs text-gray-400">
+                      Máximo disponible:{" "}
+                      <span className="text-green-400 font-semibold">{selectedArticulo.stockActual} unidades</span>
+                    </p>
+                  )}
                 </div>
 
                 {selectedArticulo && formData.cantidad > 0 && (
-                  <div className="p-3 bg-gray-700 rounded-md">
-                    <p className="text-white font-semibold">
-                      Total: $
-                      {(selectedArticulo.costoCompra * formData.cantidad).toLocaleString("es-AR", {
-                        minimumFractionDigits: 2,
-                      })}
-                    </p>
+                  <div className="bg-gradient-to-r from-gray-700/30 to-gray-600/30 backdrop-blur-sm rounded-xl p-4">
+                    <div className="flex items-center space-x-2 pb-2 border-b border-gray-600/30 mb-3">
+                      <div className="w-5 h-5 bg-green-600/20 rounded flex items-center justify-center">
+                        <DollarSign className="w-3 h-3 text-green-400" />
+                      </div>
+                      <span className="text-white font-medium">Resumen</span>
+                    </div>
+
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400">Total a pagar:</span>
+                      <span className="text-red-400 font-bold text-xl">
+                        $
+                        {(selectedArticulo.costoCompra * formData.cantidad).toLocaleString("es-AR", {
+                          minimumFractionDigits: 2,
+                        })}
+                      </span>
+                    </div>
                   </div>
                 )}
               </div>
 
-              <div className="flex justify-end space-x-2 text-white">
-                <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>
+              <div className="flex justify-end space-x-3 pt-6 border-t border-gray-700/30">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={onClose}
+                  disabled={loading}
+                  className="text-gray-400 hover:text-white hover:bg-gray-700/50"
+                >
                   Cancelar
                 </Button>
-                <Button className="bg-red-600 hover:bg-red-700" type="submit" disabled={loading}>
+                <Button
+                  className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg"
+                  type="submit"
+                  disabled={loading}
+                >
                   {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                   Registrar Orden
                 </Button>

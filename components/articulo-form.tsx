@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { X, Save, Loader2 } from "lucide-react"
+import { X, Save, Loader2, Package, Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -44,13 +44,6 @@ interface ArticuloFormProps {
   onCancel: () => void
 }
 
-interface ArticuloCreacionFormProps {
-  articulo?: Articulo | null
-  proveedores: Proveedor[]
-  onSave: () => void
-  onCancel: () => void
-}
-
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
 
 export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: ArticuloFormProps) {
@@ -84,7 +77,6 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
       }
     } catch (error) {
       console.error("Error cargando proveedores filtrados:", error)
-      // En caso de error, usar todos los proveedores
       setProveedoresFiltrados(proveedores)
     }
   }
@@ -108,10 +100,8 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
         proveedorPredeterminado: articulo.proveedorPredeterminado ?? null,
       })
 
-      // Cargar proveedores filtrados para edición
       cargarProveedoresFiltrados(articulo.codArticulo)
     } else {
-      // Para creación, usar todos los proveedores
       setProveedoresFiltrados(proveedores)
     }
   }, [articulo, proveedores])
@@ -169,50 +159,66 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <Card className="bg-gray-800 border-gray-700 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <CardTitle className="text-white">{articulo ? "Editar Artículo" : "Agregar Artículo"}</CardTitle>
-          <Button variant="ghost" size="sm" onClick={onCancel} className="text-gray-400 hover:text-white">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <Card className="bg-gray-800/95 backdrop-blur-md border-gray-700/50 w-full max-w-5xl max-h-[90vh] overflow-y-auto shadow-2xl">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6 border-b border-gray-700/50">
+          <CardTitle className="text-xl font-bold text-white flex items-center">
+            <div className="w-8 h-8 bg-gradient-to-r from-red-600 to-red-700 rounded-lg flex items-center justify-center mr-3">
+              <Package className="w-4 h-4 text-white" />
+            </div>
+            {articulo ? "Editar Artículo" : "Agregar Artículo"}
+          </CardTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onCancel}
+            className="text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-full"
+          >
             <X className="h-4 w-4" />
           </Button>
         </CardHeader>
 
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <CardContent className="p-6">
+          <form onSubmit={handleSubmit} className="space-y-8">
             {/* Información Básica */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-white border-b border-gray-700 pb-2">Información Básica</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="nombreArt" className="text-white">
-                    Nombre del Artículo <span className="text-red-500">*</span>
+            <div className="space-y-6">
+              <div className="flex items-center space-x-2 pb-3 border-b border-gray-700/30">
+                <div className="w-6 h-6 bg-red-600/20 rounded-lg flex items-center justify-center">
+                  <Package className="w-3 h-3 text-red-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-white">Información Básica</h3>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <Label htmlFor="nombreArt" className="text-gray-300 font-medium">
+                    Nombre del Artículo <span className="text-red-400">*</span>
                   </Label>
                   <Input
                     id="nombreArt"
                     value={formData.nombreArt}
                     onChange={(e) => handleInputChange("nombreArt", e.target.value)}
-                    className="bg-gray-700 border-gray-600 text-white"
+                    className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12"
                     required
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="modeloInventario" className="text-white">
-                    Modelo de Inventario <span className="text-red-500">*</span>
+                <div className="space-y-3">
+                  <Label htmlFor="modeloInventario" className="text-gray-300 font-medium">
+                    Modelo de Inventario <span className="text-red-400">*</span>
                   </Label>
                   <Select
                     value={formData.modeloInventario}
                     onValueChange={(value) => handleInputChange("modeloInventario", value)}
                   >
-                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                    <SelectTrigger className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12">
                       <SelectValue placeholder="Seleccionar modelo" />
                     </SelectTrigger>
-                    <SelectContent className="bg-gray-700 border-gray-600">
-                      <SelectItem value="LOTEFIJO" className="text-white hover:bg-gray-600">
+                    <SelectContent className="bg-gray-800 border-gray-700 backdrop-blur-md">
+                      <SelectItem value="LOTEFIJO" className="text-white hover:bg-gray-700/50">
                         Lote Fijo
                       </SelectItem>
-                      <SelectItem value="INTERVALOFIJO" className="text-white hover:bg-gray-600">
+                      <SelectItem value="INTERVALOFIJO" className="text-white hover:bg-gray-700/50">
                         Intervalo Fijo
                       </SelectItem>
                     </SelectContent>
@@ -220,26 +226,28 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="descripArt" className="text-white">
-                  Descripción <span className="text-red-500">*</span>
+              <div className="space-y-3">
+                <Label htmlFor="descripArt" className="text-gray-300 font-medium">
+                  Descripción <span className="text-red-400">*</span>
                 </Label>
                 <Textarea
                   id="descripArt"
                   value={formData.descripArt}
                   onChange={(e) => handleInputChange("descripArt", e.target.value)}
-                  className="bg-gray-700 border-gray-600 text-white"
+                  className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 min-h-[100px]"
                   rows={3}
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="proveedorPredeterminadoId" className="text-white">
-                  Proveedor Predeterminado <span className="text-red-500">*</span>
+              <div className="space-y-3">
+                <Label htmlFor="proveedorPredeterminadoId" className="text-gray-300 font-medium">
+                  Proveedor Predeterminado <span className="text-red-400">*</span>
                 </Label>
                 <Select
                   value={
-                    formData.proveedorPredeterminado !== null ? String(formData.proveedorPredeterminado.codProveedor) : "none"
+                    formData.proveedorPredeterminado !== null
+                      ? String(formData.proveedorPredeterminado.codProveedor)
+                      : "none"
                   }
                   onValueChange={(value) => {
                     const selectedProveedor =
@@ -251,12 +259,19 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
                   }}
                   required
                 >
-                  <SelectTrigger className="bg-gray-700 border-gray-600 text-white">Proveedor</SelectTrigger>
-
-                  <SelectContent className="bg-gray-700 border-gray-600 text-white">
-                    <SelectItem value="none">-- Ninguno --</SelectItem>
+                  <SelectTrigger className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12">
+                    <SelectValue placeholder="Seleccionar proveedor" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-800 border-gray-700 backdrop-blur-md">
+                    <SelectItem value="none" className="text-white hover:bg-gray-700/50">
+                      -- Ninguno --
+                    </SelectItem>
                     {(articulo ? proveedoresFiltrados : proveedores).map((p) => (
-                      <SelectItem key={p.codProveedor} value={String(p.codProveedor)}>
+                      <SelectItem
+                        key={p.codProveedor}
+                        value={String(p.codProveedor)}
+                        className="text-white hover:bg-gray-700/50"
+                      >
                         {p.nombreProveedor}
                       </SelectItem>
                     ))}
@@ -265,172 +280,198 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
               </div>
             </div>
 
-            {/* Costos y Stock */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="demandaAnual" className="text-white">
-                  Demanda Anual <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="demandaAnual"
-                  type="number"
-                  min={0}
-                  value={formData.demandaAnual}
-                  onChange={(e) => handleInputChange("demandaAnual", Number(e.target.value))}
-                  className="bg-gray-700 border-gray-600 text-white"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="stockActual" className="text-white">
-                  Stock Actual <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="stockActual"
-                  type="number"
-                  min={0}
-                  value={formData.stockActual}
-                  onChange={(e) => handleInputChange("stockActual", Number(e.target.value))}
-                  className="bg-gray-700 border-gray-600 text-white"
-                  required
-                />
+            {/* Stock y Parámetros */}
+            <div className="space-y-6">
+              <div className="flex items-center space-x-2 pb-3 border-b border-gray-700/30">
+                <div className="w-6 h-6 bg-blue-600/20 rounded-lg flex items-center justify-center">
+                  <Package className="w-3 h-3 text-blue-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-white">Stock y Parámetros</h3>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="inventarioMax" className="text-white">
-                  Inventario Máximo <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="inventarioMax"
-                  type="number"
-                  min={0}
-                  value={formData.inventarioMax}
-                  onChange={(e) => handleInputChange("inventarioMax", Number(e.target.value))}
-                  className="bg-gray-700 border-gray-600 text-white"
-                  required
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="stockSeguridad" className="text-white">
-                Stock Seguridad <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="stockSeguridad"
-                type="number"
-                min={0}
-                value={formData.stockSeguridad}
-                onChange={(e) => handleInputChange("stockSeguridad", Number(e.target.value))}
-                className="bg-gray-700 border-gray-600 text-white"
-              />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="costoCompra" className="text-white">
-                  Costo Compra
-                </Label>
-                <Input
-                  id="costoCompra"
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  value={formData.costoCompra}
-                  onChange={(e) => handleInputChange("costoCompra", Number(e.target.value))}
-                  className="bg-gray-700 border-gray-600 text-white"
-                  required
-                  disabled
-                />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-3">
+                  <Label htmlFor="demandaAnual" className="text-gray-300 font-medium">
+                    Demanda Anual <span className="text-red-400">*</span>
+                  </Label>
+                  <Input
+                    id="demandaAnual"
+                    type="number"
+                    min={0}
+                    value={formData.demandaAnual}
+                    onChange={(e) => handleInputChange("demandaAnual", Number(e.target.value))}
+                    className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12"
+                    required
+                  />
+                </div>
+                <div className="space-y-3">
+                  <Label htmlFor="stockActual" className="text-gray-300 font-medium">
+                    Stock Actual <span className="text-red-400">*</span>
+                  </Label>
+                  <Input
+                    id="stockActual"
+                    type="number"
+                    min={0}
+                    value={formData.stockActual}
+                    onChange={(e) => handleInputChange("stockActual", Number(e.target.value))}
+                    className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12"
+                    required
+                  />
+                </div>
+                <div className="space-y-3">
+                  <Label htmlFor="inventarioMax" className="text-gray-300 font-medium">
+                    Inventario Máximo <span className="text-red-400">*</span>
+                  </Label>
+                  <Input
+                    id="inventarioMax"
+                    type="number"
+                    min={0}
+                    value={formData.inventarioMax}
+                    onChange={(e) => handleInputChange("inventarioMax", Number(e.target.value))}
+                    className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12"
+                    required
+                  />
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="cgi" className="text-white">
-                  CGI
+              <div className="space-y-3">
+                <Label htmlFor="stockSeguridad" className="text-gray-300 font-medium">
+                  Stock Seguridad <span className="text-red-400">*</span>
                 </Label>
                 <Input
-                  id="cgi"
+                  id="stockSeguridad"
                   type="number"
                   min={0}
-                  step={0.01}
-                  value={formData.cgi}
-                  onChange={(e) => handleInputChange("cgi", Number(e.target.value))}
-                  className="bg-gray-700 border-gray-600 text-white"
-                  required
-                  disabled
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="costoAlmacenamiento" className="text-white">
-                  Costo Almacenamiento
-                </Label>
-                <Input
-                  id="costoAlmacenamiento"
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  value={formData.costoAlmacenamiento}
-                  onChange={(e) => handleInputChange("costoAlmacenamiento", Number(e.target.value))}
-                  className="bg-gray-700 border-gray-600 text-white"
-                  required
-                  disabled
+                  value={formData.stockSeguridad}
+                  onChange={(e) => handleInputChange("stockSeguridad", Number(e.target.value))}
+                  className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="loteOptimo" className="text-white">
-                  Lote Óptimo
-                </Label>
-                <Input
-                  id="loteOptimo"
-                  type="number"
-                  min={0}
-                  value={formData.loteOptimo}
-                  onChange={(e) => handleInputChange("loteOptimo", Number(e.target.value))}
-                  className="bg-gray-700 border-gray-600 text-white"
-                  required
-                  disabled
-                />
+            {/* Costos (Solo lectura) */}
+            <div className="space-y-6">
+              <div className="flex items-center space-x-2 pb-3 border-b border-gray-700/30">
+                <div className="w-6 h-6 bg-yellow-600/20 rounded-lg flex items-center justify-center">
+                  <Settings className="w-3 h-3 text-yellow-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-white">Costos (Calculados Automáticamente)</h3>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="puntoPedido" className="text-white">
-                  Punto de Pedido
-                </Label>
-                <Input
-                  id="puntoPedido"
-                  type="number"
-                  min={0}
-                  value={formData.puntoPedido}
-                  onChange={(e) => handleInputChange("puntoPedido", Number(e.target.value))}
-                  className="bg-gray-700 border-gray-600 text-white"
-                  required
-                  disabled
-                />
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-3">
+                  <Label htmlFor="costoCompra" className="text-gray-300 font-medium">
+                    Costo Compra
+                  </Label>
+                  <Input
+                    id="costoCompra"
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    value={formData.costoCompra}
+                    onChange={(e) => handleInputChange("costoCompra", Number(e.target.value))}
+                    className="bg-gray-600/30 border-gray-600/30 text-gray-400 h-12"
+                    required
+                    disabled
+                  />
+                </div>
+                <div className="space-y-3">
+                  <Label htmlFor="cgi" className="text-gray-300 font-medium">
+                    CGI
+                  </Label>
+                  <Input
+                    id="cgi"
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    value={formData.cgi}
+                    onChange={(e) => handleInputChange("cgi", Number(e.target.value))}
+                    className="bg-gray-600/30 border-gray-600/30 text-gray-400 h-12"
+                    required
+                    disabled
+                  />
+                </div>
+                <div className="space-y-3">
+                  <Label htmlFor="costoAlmacenamiento" className="text-gray-300 font-medium">
+                    Costo Almacenamiento
+                  </Label>
+                  <Input
+                    id="costoAlmacenamiento"
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    value={formData.costoAlmacenamiento}
+                    onChange={(e) => handleInputChange("costoAlmacenamiento", Number(e.target.value))}
+                    className="bg-gray-600/30 border-gray-600/30 text-gray-400 h-12"
+                    required
+                    disabled
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="costoPedido" className="text-white">
-                  Costo Pedido
-                </Label>
-                <Input
-                  id="costoPedido"
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  value={formData.costoPedido}
-                  onChange={(e) => handleInputChange("costoPedido", Number(e.target.value))}
-                  className="bg-gray-700 border-gray-600 text-white"
-                  required
-                  disabled
-                />
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-3">
+                  <Label htmlFor="loteOptimo" className="text-gray-300 font-medium">
+                    Lote Óptimo
+                  </Label>
+                  <Input
+                    id="loteOptimo"
+                    type="number"
+                    min={0}
+                    value={formData.loteOptimo}
+                    onChange={(e) => handleInputChange("loteOptimo", Number(e.target.value))}
+                    className="bg-gray-600/30 border-gray-600/30 text-gray-400 h-12"
+                    required
+                    disabled
+                  />
+                </div>
+                <div className="space-y-3">
+                  <Label htmlFor="puntoPedido" className="text-gray-300 font-medium">
+                    Punto de Pedido
+                  </Label>
+                  <Input
+                    id="puntoPedido"
+                    type="number"
+                    min={0}
+                    value={formData.puntoPedido}
+                    onChange={(e) => handleInputChange("puntoPedido", Number(e.target.value))}
+                    className="bg-gray-600/30 border-gray-600/30 text-gray-400 h-12"
+                    required
+                    disabled
+                  />
+                </div>
+                <div className="space-y-3">
+                  <Label htmlFor="costoPedido" className="text-gray-300 font-medium">
+                    Costo Pedido
+                  </Label>
+                  <Input
+                    id="costoPedido"
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    value={formData.costoPedido}
+                    onChange={(e) => handleInputChange("costoPedido", Number(e.target.value))}
+                    className="bg-gray-600/30 border-gray-600/30 text-gray-400 h-12"
+                    required
+                    disabled
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="flex justify-end space-x-2 text-white">
-              <Button type="button" variant="ghost" onClick={onCancel} disabled={loading}>
+            {/* Botones */}
+            <div className="flex justify-end space-x-3 pt-6 border-t border-gray-700/30">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={onCancel}
+                disabled={loading}
+                className="text-gray-400 hover:text-white hover:bg-gray-700/50"
+              >
                 Cancelar
               </Button>
               <Button
-                className="bg-red-600 hover:bg-red-700"
+                className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg"
                 type="submit"
                 disabled={loading || formData.stockActual <= 0}
               >

@@ -18,8 +18,6 @@ interface Articulo {
   descripArt: string
   demandaAnual: number
   costoAlmacenamiento: number
-  costoPedido: number
-  costoCompra: number
   stockActual: number
   fechaHoraBajaArticulo?: string
   cgi: number
@@ -56,6 +54,7 @@ export function ProveedorForm({ onSave, onCancel, articulos }: ProveedorFormProp
     correo: "",
     telefono: "",
     direccion: "",
+    intervaloReposicion: "",
   })
 
   const [articulosSeleccionados, setArticulosSeleccionados] = useState<ArticuloProveedorDTO[]>([])
@@ -140,6 +139,7 @@ export function ProveedorForm({ onSave, onCancel, articulos }: ProveedorFormProp
         telefono: formData.telefono,
         direccion: formData.direccion,
         articulos: articulosSeleccionados,
+        intervaloReposicion: formData.intervaloReposicion,
       }
 
       const response = await fetch(`${API_BASE_URL}/proveedores`, {
@@ -231,6 +231,7 @@ export function ProveedorForm({ onSave, onCancel, articulos }: ProveedorFormProp
                   </Label>
                   <Input
                     id="telefono"
+                    type="number"
                     value={formData.telefono}
                     onChange={(e) => handleInputChange("telefono", e.target.value)}
                     className="bg-gray-700 border-gray-600 text-white"
@@ -249,6 +250,22 @@ export function ProveedorForm({ onSave, onCancel, articulos }: ProveedorFormProp
                     className="bg-gray-700 border-gray-600 text-white"
                   />
                 </div>
+              </div>
+            </div>
+            <div className="space-y-4">
+              {/** Intervalo de reposición */}
+              <div className="space-y-2">
+                <Label htmlFor="intervaloReposicion" className="text-white">
+                  Intervalo de reposición
+                </Label>
+                <Input
+                  id="intervaloReposicion"
+                  type="number"
+                  min={0}
+                  value={formData.intervaloReposicion}
+                  onChange={(e) => handleInputChange("intervaloReposicion", e.target.value)}
+                  className="bg-gray-700 border-gray-600 text-white"
+                />  
               </div>
             </div>
 

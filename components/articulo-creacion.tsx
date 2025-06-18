@@ -2,18 +2,12 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { X, Save, Loader2 } from "lucide-react"
+import { X, Save, Loader2, Package } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 
@@ -30,20 +24,13 @@ interface Articulo {
   nombreArt: string
   descripArt: string
   demandaAnual: number
-  //costoAlmacenamiento: number
-  //costoPedido: number
-  //costoCompra: number
   stockActual: number
   fechaHoraBajaArticulo?: string
-  //cgi: number
-  //loteOptimo: number
-  //puntoPedido: number
   inventarioMax: number
   stockSeguridad: number
   nivelServicio: number
   desviacionEstandar: number
   modeloInventario: "LOTEFIJO" | "INTERVALOFIJO"
-  //proveedorPredeterminado: Proveedor
 }
 
 interface ArticuloCreacionFormProps {
@@ -88,21 +75,18 @@ export function ArticuloCreacion({ articulo, onSave, onCancel }: ArticuloCreacio
     }
   }, [articulo])
 
- // ← 1) handleInputChange A NIVEL DE COMPONENTE
   const handleInputChange = (field: keyof typeof formData, value: string | number) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [field]: value,
     }))
   }
 
-  // ← 2) handleFileChange A NIVEL DE COMPONENTE
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null
-    setFormData(prev => ({ ...prev, archivo: file }))
+    setFormData((prev) => ({ ...prev, archivo: file }))
   }
 
-  // ← 3) handleSubmit A NIVEL DE COMPONENTE
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -122,10 +106,7 @@ export function ArticuloCreacion({ articulo, onSave, onCancel }: ArticuloCreacio
         fd.append("archivo", formData.archivo)
       }
 
-      const response = await fetch(
-        `${API_BASE_URL}/articulos/con-imagen`,
-        { method: "POST", body: fd }
-      )
+      const response = await fetch(`${API_BASE_URL}/articulos/con-imagen`, { method: "POST", body: fd })
       if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`)
 
       toast({ title: "Éxito", description: "Artículo creado correctamente" })
@@ -139,184 +120,227 @@ export function ArticuloCreacion({ articulo, onSave, onCancel }: ArticuloCreacio
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <Card className="bg-gray-800 border-gray-700 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-        <CardHeader className="flex justify-between pb-4">
-          <CardTitle className="text-white">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <Card className="bg-gray-800/95 backdrop-blur-md border-gray-700/50 w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6 border-b border-gray-700/50">
+          <CardTitle className="text-xl font-bold text-white flex items-center">
+            <div className="w-8 h-8 bg-gradient-to-r from-red-600 to-red-700 rounded-lg flex items-center justify-center mr-3">
+              <Package className="w-4 h-4 text-white" />
+            </div>
             {articulo ? "Editar Artículo" : "Agregar Artículo"}
           </CardTitle>
-          <Button variant="ghost" size="sm" onClick={onCancel} className="text-gray-400 hover:text-white">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onCancel}
+            className="text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-full"
+          >
             <X className="h-4 w-4" />
           </Button>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <CardContent className="p-6">
+          <form onSubmit={handleSubmit} className="space-y-8">
             {/* Información Básica */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-white border-b border-gray-700 pb-2">
-                Información Básica
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="nombreArt" className="text-white">
-                    Nombre del Artículo *
+            <div className="space-y-6">
+              <div className="flex items-center space-x-2 pb-3 border-b border-gray-700/30">
+                <div className="w-6 h-6 bg-red-600/20 rounded-lg flex items-center justify-center">
+                  <Package className="w-3 h-3 text-red-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-white">Información Básica</h3>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <Label htmlFor="nombreArt" className="text-gray-300 font-medium">
+                    Nombre del Artículo <span className="text-red-400">*</span>
                   </Label>
                   <Input
                     id="nombreArt"
                     value={formData.nombreArt}
-                    onChange={e => handleInputChange("nombreArt", e.target.value)}
-                    className="bg-gray-700 border-gray-600 text-white"
+                    onChange={(e) => handleInputChange("nombreArt", e.target.value)}
+                    className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12"
                     required
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="modeloInventario" className="text-white">
-                    Modelo de Inventario *
+                <div className="space-y-3">
+                  <Label htmlFor="modeloInventario" className="text-gray-300 font-medium">
+                    Modelo de Inventario <span className="text-red-400">*</span>
                   </Label>
                   <Select
                     value={formData.modeloInventario}
-                    onValueChange={value => handleInputChange("modeloInventario", value)}
+                    onValueChange={(value) => handleInputChange("modeloInventario", value)}
                   >
-                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                    <SelectTrigger className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12">
                       <SelectValue placeholder="Seleccionar modelo" />
                     </SelectTrigger>
-                    <SelectContent className="bg-gray-700 border-gray-600">
-                      <SelectItem value="LOTEFIJO">Lote Fijo</SelectItem>
-                      <SelectItem value="INTERVALOFIJO">Intervalo Fijo</SelectItem>
+                    <SelectContent className="bg-gray-800 border-gray-700 backdrop-blur-md">
+                      <SelectItem value="LOTEFIJO" className="text-white hover:bg-gray-700/50">
+                        Lote Fijo
+                      </SelectItem>
+                      <SelectItem value="INTERVALOFIJO" className="text-white hover:bg-gray-700/50">
+                        Intervalo Fijo
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="descripArt" className="text-white">
-                  Descripción *
+
+              <div className="space-y-3">
+                <Label htmlFor="descripArt" className="text-gray-300 font-medium">
+                  Descripción <span className="text-red-400">*</span>
                 </Label>
                 <Textarea
                   id="descripArt"
                   value={formData.descripArt}
-                  onChange={e => handleInputChange("descripArt", e.target.value)}
-                  className="bg-gray-700 border-gray-600 text-white"
+                  onChange={(e) => handleInputChange("descripArt", e.target.value)}
+                  className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 min-h-[100px]"
                   rows={3}
                   required
                 />
               </div>
             </div>
 
-            {/* Costos y Stock */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/** Demanda Anual */}
-              <div className="space-y-2">
-                <Label htmlFor="demandaAnual" className="text-white">
-                  Demanda Anual *
+            {/* Stock y Parámetros */}
+            <div className="space-y-6">
+              <div className="flex items-center space-x-2 pb-3 border-b border-gray-700/30">
+                <div className="w-6 h-6 bg-blue-600/20 rounded-lg flex items-center justify-center">
+                  <Package className="w-3 h-3 text-blue-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-white">Stock y Parámetros</h3>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-3">
+                  <Label htmlFor="demandaAnual" className="text-gray-300 font-medium">
+                    Demanda Anual <span className="text-red-400">*</span>
+                  </Label>
+                  <Input
+                    id="demandaAnual"
+                    type="number"
+                    min={0}
+                    value={formData.demandaAnual}
+                    onChange={(e) => handleInputChange("demandaAnual", Number(e.target.value))}
+                    className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12"
+                    required
+                  />
+                </div>
+                <div className="space-y-3">
+                  <Label htmlFor="stockActual" className="text-gray-300 font-medium">
+                    Stock Actual <span className="text-red-400">*</span>
+                  </Label>
+                  <Input
+                    id="stockActual"
+                    type="number"
+                    min={0}
+                    value={formData.stockActual}
+                    onChange={(e) => handleInputChange("stockActual", Number(e.target.value))}
+                    className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12"
+                    required
+                  />
+                </div>
+                <div className="space-y-3">
+                  <Label htmlFor="inventarioMax" className="text-gray-300 font-medium">
+                    Inventario Máximo <span className="text-red-400">*</span>
+                  </Label>
+                  <Input
+                    id="inventarioMax"
+                    type="number"
+                    min={0}
+                    value={formData.inventarioMax}
+                    onChange={(e) => handleInputChange("inventarioMax", Number(e.target.value))}
+                    className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <Label htmlFor="stockSeguridad" className="text-gray-300 font-medium">
+                  Stock Seguridad <span className="text-red-400">*</span>
                 </Label>
                 <Input
-                  id="demandaAnual"
+                  id="stockSeguridad"
                   type="number"
                   min={0}
-                  value={formData.demandaAnual}
-                  onChange={e => handleInputChange("demandaAnual", Number(e.target.value))}
-                  className="bg-gray-700 border-gray-600 text-white"
+                  value={formData.stockSeguridad}
+                  onChange={(e) => handleInputChange("stockSeguridad", Number(e.target.value))}
+                  className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12"
                   required
                 />
               </div>
-              {/** Stock Actual */}
-              <div className="space-y-2">
-                <Label htmlFor="stockActual" className="text-white">
-                  Stock Actual *
-                </Label>
-                <Input
-                  id="stockActual"
-                  type="number"
-                  min={0}
-                  value={formData.stockActual}
-                  onChange={e => handleInputChange("stockActual", Number(e.target.value))}
-                  className="bg-gray-700 border-gray-600 text-white"
-                  required
-                />
-              </div>
-              {/** Inventario Máximo */}
-              <div className="space-y-2">
-                <Label htmlFor="inventarioMax" className="text-white">
-                  Inventario Máximo *
-                </Label>
-                <Input
-                  id="inventarioMax"
-                  type="number"
-                  min={0}
-                  value={formData.inventarioMax}
-                  onChange={e => handleInputChange("inventarioMax", Number(e.target.value))}
-                  className="bg-gray-700 border-gray-600 text-white"
-                  required
-                />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <Label htmlFor="nivelServicio" className="text-gray-300 font-medium">
+                    Nivel de Servicio %
+                  </Label>
+                  <Input
+                    id="nivelServicio"
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={formData.nivelServicio}
+                    onChange={(e) => handleInputChange("nivelServicio", Number(e.target.value))}
+                    className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12"
+                    required
+                  />
+                </div>
+                <div className="space-y-3">
+                  <Label htmlFor="desviacionEstandar" className="text-gray-300 font-medium">
+                    Desviación Estándar
+                  </Label>
+                  <Input
+                    id="desviacionEstandar"
+                    type="number"
+                    min={0}
+                    value={formData.desviacionEstandar}
+                    onChange={(e) => handleInputChange("desviacionEstandar", Number(e.target.value))}
+                    className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12"
+                    required
+                  />
+                </div>
               </div>
             </div>
-            {/** Stock Seguridad */}
-            <div className="space-y-2">
-              <Label htmlFor="stockSeguridad" className="text-white">
-                Stock Seguridad *
-              </Label>
-              <Input
-                id="stockSeguridad"
-                type="number"
-                min={0}
-                value={formData.stockSeguridad}
-                onChange={e => handleInputChange("stockSeguridad", Number(e.target.value))}
-                className="bg-gray-700 border-gray-600 text-white"
-                required
-              />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="nivelServicio" className="text-white">
-                  Nivel de Servicio %
-                </Label>
-                <Input
-                  id="nivelServicio"
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={formData.nivelServicio}
-                  onChange={e => handleInputChange("nivelServicio", Number(e.target.value))}
-                  className="bg-gray-700 border-gray-600 text-white"
-                  required
-                />
+
+            {/* Imagen */}
+            <div className="space-y-6">
+              <div className="flex items-center space-x-2 pb-3 border-b border-gray-700/30">
+                <div className="w-6 h-6 bg-green-600/20 rounded-lg flex items-center justify-center">
+                  <Package className="w-3 h-3 text-green-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-white">Imagen</h3>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="desviacionEstandar" className="text-white">
-                  Desviación Estándar
+
+              <div className="space-y-3">
+                <Label htmlFor="archivo" className="text-gray-300 font-medium">
+                  Imagen del Artículo
                 </Label>
                 <Input
-                  id="desviacionEstandar"
-                  type="number"
-                  min={0}
-                  value={formData.desviacionEstandar}
-                  onChange={e => handleInputChange("desviacionEstandar", Number(e.target.value))}
-                  className="bg-gray-700 border-gray-600 text-white"
-                  required
+                  id="archivo"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12 file:bg-red-600 file:text-white file:border-0 file:rounded-md file:px-4 file:py-2 file:mr-4"
                 />
               </div>
             </div>
 
-            {/** Campo de archivo */}
-            <div className="space-y-2">
-              <Label htmlFor="archivo" className="text-white">
-                Imagen del Artículo
-              </Label>
-              <Input
-                id="archivo"
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="bg-gray-700 border-gray-600 text-white"
-              />
-            </div>
-
-            {/** Botones */}
-            <div className="flex justify-end space-x-2 text-white">
-              <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>
+            {/* Botones */}
+            <div className="flex justify-end space-x-3 pt-6 border-t border-gray-700/30">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={onCancel}
+                disabled={loading}
+                className="text-gray-400 hover:text-white hover:bg-gray-700/50"
+              >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={loading || formData.stockActual <= 0}>
+              <Button
+                type="submit"
+                disabled={loading || formData.stockActual <= 0}
+                className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg"
+              >
                 {loading ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : <Save className="mr-2 h-4 w-4" />}
                 Guardar
               </Button>

@@ -26,7 +26,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast"
 import { ArticuloForm } from "@/components/articulo-form"
 import { ArticuloCreacion } from "@/components/articulo-creacion"
-import { VentaForm } from "@/components/venta-form"
+import  VentaForm  from "@/components/venta-form"
 import { OrdenCompraDialog } from "@/components/orden-compra-dialog"
 
 import OrdenForm from "@/components/orden-form"
@@ -513,7 +513,7 @@ export default function InventoryManagement() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredArticulos.map((articulo) => {
             const status = getStockStatus(articulo)
-            const needsReorder = articulo.stockActual <= articulo.puntoPedido
+            const needsReorder = articulo.stockActual <= articulo.puntoPedido && articulo.proveedorPredeterminado !== null
 
             return (
               <Card
@@ -614,18 +614,7 @@ export default function InventoryManagement() {
                             <Edit className="w-4 h-4 mr-2" />
                             Editar
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-white hover:bg-slate-700"
-                            onClick={() => {
-                              const newStock = prompt("Nuevo stock:", articulo.stockActual.toString())
-                              if (newStock && !isNaN(Number(newStock))) {
-                                updateStock(articulo.codArticulo, Number(newStock))
-                              }
-                            }}
-                          >
-                            <RefreshCw className="w-4 h-4 mr-2" />
-                            Actualizar Stock
-                          </DropdownMenuItem>
+
                           {needsReorder && (
                             <DropdownMenuItem
                               className="text-blue-400 hover:bg-slate-700"
@@ -666,11 +655,6 @@ export default function InventoryManagement() {
                       <Badge className={`${getStatusColor(status)} text-white text-xs px-3 py-1 font-medium`}>
                         {getStatusText(status)}
                       </Badge>
-                      {needsReorder && (
-                        <Badge className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-xs px-3 py-1 font-medium">
-                          Reabastecer
-                        </Badge>
-                      )}
                     </div>
 
                     <div className="space-y-2">

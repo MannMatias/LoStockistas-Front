@@ -1,9 +1,8 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
-import { X, ShoppingCart, Loader2 } from "lucide-react"
+import { X, ShoppingCart, Loader2, Package, User, Calculator } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -53,13 +52,7 @@ export function OrdenCompraDialog({ articulo, onSave, onCancel }: OrdenCompraDia
     try {
       const ordenCompraData = {
         cantArt: cantidad,
-        montoCompra: montoTotal,
-        proveedor: {
-          codProveedor: articulo.proveedorPredeterminado.codProveedor,
-        },
-        estado: {
-          codEstadoOC: 1, // Asumiendo que 1 es "Pendiente"
-        },
+        codArticulo: articulo.codArticulo,
       }
 
       const response = await fetch(`${API_BASE_URL}/ordenes`, {
@@ -97,78 +90,105 @@ export function OrdenCompraDialog({ articulo, onSave, onCancel }: OrdenCompraDia
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <Card className="bg-gray-800 border-gray-700 w-full max-w-2xl">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <CardTitle className="text-white flex items-center">
-            <ShoppingCart className="w-5 h-5 mr-2" />
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <Card className="bg-gray-800/95 backdrop-blur-md border-gray-700/50 w-full max-w-2xl max-h-[85vh] overflow-hidden shadow-2xl">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6 border-b border-gray-700/50">
+          <CardTitle className="text-xl font-bold text-white flex items-center">
+            <div className="w-8 h-8 bg-gradient-to-r from-red-600 to-red-700 rounded-lg flex items-center justify-center mr-3">
+              <ShoppingCart className="w-4 h-4 text-white" />
+            </div>
             Crear Orden de Compra
           </CardTitle>
-          <Button variant="ghost" size="sm" onClick={onCancel} className="text-gray-400 hover:text-white">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onCancel}
+            className="text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-full"
+          >
             <X className="h-4 w-4" />
           </Button>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="p-6 overflow-y-auto max-h-[calc(85vh-120px)]">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Información del Artículo */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-white border-b border-gray-700 pb-2">
-                Información del Artículo
-              </h3>
-              <div className="bg-gray-700 p-4 rounded-lg space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-gray-300">Artículo:</span>
-                  <span className="text-white font-semibold">{articulo.nombreArt}</span>
+              <div className="flex items-center space-x-2 pb-3 border-b border-gray-700/30">
+                <div className="w-6 h-6 bg-blue-600/20 rounded-lg flex items-center justify-center">
+                  <Package className="w-3 h-3 text-blue-400" />
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-300">Código:</span>
-                  <span className="text-white">{articulo.codArticulo}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-300">Stock Actual:</span>
-                  <span className="text-white">{articulo.stockActual}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-300">Punto de Pedido:</span>
-                  <span className="text-white">{articulo.puntoPedido}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-300">Lote Óptimo:</span>
-                  <span className="text-white">{articulo.loteOptimo}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-300">Costo Unitario:</span>
-                  <span className="text-white">{formatPrice(articulo.costoPedido)}</span>
+                <h3 className="text-lg font-semibold text-white">Información del Artículo</h3>
+              </div>
+
+              <div className="bg-gray-700/30 backdrop-blur-sm rounded-xl p-4 space-y-3">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400 font-medium">Artículo:</span>
+                    <span className="text-white font-semibold">{articulo.nombreArt}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400 font-medium">Código:</span>
+                    <span className="text-white">#{articulo.codArticulo}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400 font-medium">Stock Actual:</span>
+                    <span className="text-white font-bold">{articulo.stockActual}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400 font-medium">Punto de Pedido:</span>
+                    <span className="text-yellow-400 font-bold">{articulo.puntoPedido}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400 font-medium">Lote Óptimo:</span>
+                    <span className="text-green-400 font-bold">{articulo.loteOptimo}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400 font-medium">Costo Unitario:</span>
+                    <span className="text-white font-bold">{formatPrice(articulo.costoPedido)}</span>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Información del Proveedor */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-white border-b border-gray-700 pb-2">Proveedor</h3>
-              <div className="bg-gray-700 p-4 rounded-lg space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-gray-300">Nombre:</span>
-                  <span className="text-white font-semibold">{articulo.proveedorPredeterminado.nombreProveedor}</span>
+              <div className="flex items-center space-x-2 pb-3 border-b border-gray-700/30">
+                <div className="w-6 h-6 bg-green-600/20 rounded-lg flex items-center justify-center">
+                  <User className="w-3 h-3 text-green-400" />
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-300">Email:</span>
-                  <span className="text-white">{articulo.proveedorPredeterminado.emailProveedor}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-300">Teléfono:</span>
-                  <span className="text-white">{articulo.proveedorPredeterminado.telefonoProveedor}</span>
+                <h3 className="text-lg font-semibold text-white">Proveedor</h3>
+              </div>
+
+              <div className="bg-gray-700/30 backdrop-blur-sm rounded-xl p-4 space-y-3">
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400 font-medium">Nombre:</span>
+                    <span className="text-white font-semibold">{articulo.proveedorPredeterminado.nombreProveedor}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400 font-medium">Email:</span>
+                    <span className="text-blue-400">{articulo.proveedorPredeterminado.emailProveedor}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400 font-medium">Teléfono:</span>
+                    <span className="text-white">{articulo.proveedorPredeterminado.telefonoProveedor}</span>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Detalles de la Orden */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-white border-b border-gray-700 pb-2">Detalles de la Orden</h3>
+              <div className="flex items-center space-x-2 pb-3 border-b border-gray-700/30">
+                <div className="w-6 h-6 bg-purple-600/20 rounded-lg flex items-center justify-center">
+                  <Calculator className="w-3 h-3 text-purple-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-white">Detalles de la Orden</h3>
+              </div>
+
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="cantidad" className="text-white">
+                <div className="space-y-3">
+                  <Label htmlFor="cantidad" className="text-gray-300 font-medium">
                     Cantidad a Ordenar
                   </Label>
                   <Input
@@ -177,43 +197,53 @@ export function OrdenCompraDialog({ articulo, onSave, onCancel }: OrdenCompraDia
                     min="1"
                     value={cantidad}
                     onChange={(e) => setCantidad(Number.parseInt(e.target.value) || 0)}
-                    className="bg-gray-700 border-gray-600 text-white"
+                    className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12"
                     required
                   />
-                  <p className="text-xs text-gray-400">Cantidad sugerida: {articulo.loteOptimo} unidades</p>
+
                 </div>
 
-                <div className="bg-gray-700 p-4 rounded-lg space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-gray-300">Cantidad:</span>
-                    <span className="text-white">{cantidad} unidades</span>
+                <div className="bg-gradient-to-r from-gray-700/30 to-gray-600/30 backdrop-blur-sm rounded-xl p-4 space-y-3">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex justify-between">
+                      <span className="text-gray-400 font-medium">Cantidad:</span>
+                      <span className="text-white font-bold">{cantidad} unidades</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400 font-medium">Precio Unitario:</span>
+                      <span className="text-white font-bold">{formatPrice(articulo.costoPedido)}</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-300">Precio Unitario:</span>
-                    <span className="text-white">{formatPrice(articulo.costoPedido)}</span>
-                  </div>
-                  <div className="flex justify-between font-semibold text-lg border-t border-gray-600 pt-2">
-                    <span className="text-gray-300">Total:</span>
-                    <span className="text-red-400">{formatPrice(montoTotal)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-300">Stock Resultante:</span>
-                    <span className="text-green-400">{stockResultante} unidades</span>
+
+                  <div className="border-t border-gray-600/50 pt-4">
+                    <div className="flex justify-between items-center text-lg">
+                      <span className="text-gray-300 font-semibold">Total:</span>
+                      <span className="text-red-400 font-bold text-xl">{formatPrice(montoTotal)}</span>
+                    </div>
+                    <div className="flex justify-between items-center mt-2">
+                      <span className="text-gray-400 font-medium">Stock Resultante:</span>
+                      <span className="text-green-400 font-bold">{stockResultante} unidades</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="flex justify-end space-x-2 pt-4">
+            {/* Botones */}
+            <div className="flex justify-end space-x-3 pt-6 border-t border-gray-700/30">
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
                 onClick={onCancel}
-                className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                className="text-gray-400 hover:text-white hover:bg-gray-700/50"
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={loading} className="bg-red-600 hover:bg-red-700">
+              <Button
+                type="submit"
+                disabled={loading}
+                className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg"
+              >
                 {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
