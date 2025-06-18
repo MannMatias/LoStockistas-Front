@@ -39,6 +39,7 @@ interface Proveedor {
   emailProveedor: string
 }
 
+
 interface Articulo {
   codArticulo: number
   nombreArt: string
@@ -54,9 +55,11 @@ interface Articulo {
   puntoPedido: number
   inventarioMax: number
   stockSeguridad: number
+  urlImagen?: string
   modeloInventario: "LOTEFIJO" | "INTERVALOFIJO"
   proveedorPredeterminado: Proveedor
 }
+
 
 interface InventoryStats {
   totalArticulos: number
@@ -489,12 +492,20 @@ if (price === null) return "$0"
                 key={articulo.codArticulo}
                 className="bg-gray-800 border-gray-700 hover:border-red-600 transition-colors"
               >
+               {articulo.urlImagen && (
+                  <img
+                    src={articulo.urlImagen}
+                    alt={articulo.nombreArt}
+                    className="w-full h-32 object-cover rounded-t-md"
+                  />
+                )}
                 <CardContent className="p-4">
                   <div className="space-y-3">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <h3 className="font-semibold text-sm text-white line-clamp-2">{articulo.nombreArt}</h3>
                         <p className="text-xs text-gray-400 mt-1">Código: {articulo.codArticulo}</p>
+                        
                       </div>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>

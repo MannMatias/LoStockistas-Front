@@ -48,6 +48,7 @@ interface Articulo {
   stockSeguridadIF: number
   modeloInventario: "LOTEFIJO" | "INTERVALOFIJO"
   proveedorPredeterminado?: Proveedor | null
+  urlImagen?:  string 
 }
 
 interface EstadoOC {
