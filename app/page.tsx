@@ -26,7 +26,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast"
 import { ArticuloForm } from "@/components/articulo-form"
 import { ArticuloCreacion } from "@/components/articulo-creacion"
-import  VentaForm  from "@/components/venta-form"
+import VentaForm from "@/components/venta-form"
 import { OrdenCompraDialog } from "@/components/orden-compra-dialog"
 
 import OrdenForm from "@/components/orden-form"
@@ -57,6 +57,8 @@ interface Articulo {
   urlImagen?: string
   modeloInventario: "LOTEFIJO" | "INTERVALOFIJO"
   proveedorPredeterminado: Proveedor
+  desviacionEstandar: number
+  nivelServicio: number
 }
 
 interface InventoryStats {
@@ -513,7 +515,8 @@ export default function InventoryManagement() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredArticulos.map((articulo) => {
             const status = getStockStatus(articulo)
-            const needsReorder = articulo.stockActual <= articulo.puntoPedido && articulo.proveedorPredeterminado !== null
+            const needsReorder =
+              articulo.stockActual <= articulo.puntoPedido && articulo.proveedorPredeterminado !== null
 
             return (
               <Card
@@ -525,7 +528,7 @@ export default function InventoryManagement() {
                     <img
                       src={articulo.urlImagen || "/placeholder.svg"}
                       alt={articulo.nombreArt}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 rounded-lg "
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                     <div className="absolute top-3 right-3">
@@ -690,6 +693,18 @@ export default function InventoryManagement() {
                       <div className="bg-gray-700/50 rounded-lg p-3">
                         <div className="text-gray-400 text-xs mb-1">Stock Máx</div>
                         <div className="text-white font-bold text-lg">{articulo.inventarioMax}</div>
+                      </div>
+                    </div>
+
+                    {/* Agregar este nuevo grid después del anterior */}
+                    <div className="grid grid-cols-2 gap-3 text-sm mt-3">
+                      <div className="bg-gray-700/50 rounded-lg p-3">
+                        <div className="text-gray-400 text-xs mb-1">Nivel Servicio</div>
+                        <div className="text-white font-bold text-lg">{articulo.nivelServicio}%</div>
+                      </div>
+                      <div className="bg-gray-700/50 rounded-lg p-3">
+                        <div className="text-gray-400 text-xs mb-1">Desv. Estándar</div>
+                        <div className="text-white font-bold text-lg">{articulo.desviacionEstandar}</div>
                       </div>
                     </div>
 

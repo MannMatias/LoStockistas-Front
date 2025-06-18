@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { X, Save, Loader2, Package, Settings } from "lucide-react"
+import { X, Save, Loader2, Package, Settings } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -24,15 +24,12 @@ interface Articulo {
   nombreArt: string
   descripArt: string
   demandaAnual: number
-  costoAlmacenamiento: number
-  costoPedido: number
-  costoCompra: number
   stockActual: number
-  cgi: number
-  loteOptimo: number
-  puntoPedido: number
+  fechaHoraBajaArticulo?: string
   inventarioMax: number
   stockSeguridad: number
+  nivelServicio: number
+  desviacionEstandar: number
   modeloInventario: "LOTEFIJO" | "INTERVALOFIJO"
   proveedorPredeterminado?: Proveedor
 }
@@ -51,17 +48,14 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
     nombreArt: "",
     descripArt: "",
     demandaAnual: 0,
-    costoAlmacenamiento: 0,
-    costoPedido: 0,
-    costoCompra: 0,
     stockActual: 0,
-    cgi: 0,
-    loteOptimo: 0,
-    puntoPedido: 0,
     inventarioMax: 0,
     stockSeguridad: 0,
-    modeloInventario: "LOTEFIJO" as "LOTEFIJO" | "INTERVALOFIJO",
+    nivelServicio: 0,
+    desviacionEstandar: 0,
+    modeloInventario: "LOTEFIJO" as "LOTEFIJO" | "INTERVALOFIJO" ,
     proveedorPredeterminado: null as Proveedor | null,
+    archivo: null as File | null,
   })
 
   const [loading, setLoading] = useState(false)
@@ -87,17 +81,14 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
         nombreArt: articulo.nombreArt,
         descripArt: articulo.descripArt,
         demandaAnual: articulo.demandaAnual,
-        costoAlmacenamiento: articulo.costoAlmacenamiento,
-        costoPedido: articulo.costoPedido,
-        costoCompra: articulo.costoCompra,
         stockActual: articulo.stockActual,
-        cgi: articulo.cgi,
-        loteOptimo: articulo.loteOptimo,
-        puntoPedido: articulo.puntoPedido,
         inventarioMax: articulo.inventarioMax,
         stockSeguridad: articulo.stockSeguridad,
+        nivelServicio: articulo.nivelServicio ?? 0,
+        desviacionEstandar: articulo.desviacionEstandar ?? 0,
         modeloInventario: articulo.modeloInventario,
         proveedorPredeterminado: articulo.proveedorPredeterminado ?? null,
+        archivo: null,
       })
 
       cargarProveedoresFiltrados(articulo.codArticulo)
@@ -106,32 +97,62 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
     }
   }, [articulo, proveedores])
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null
+    setFormData((prev) => ({ ...prev, archivo: file }))
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
     try {
-      const url = articulo ? `${API_BASE_URL}/articulos/${articulo.codArticulo}` : `${API_BASE_URL}/articulos`
-      const method = articulo ? "PUT" : "POST"
+      if (articulo) {
+        // Edición - usar JSON
+        const url = `${API_BASE_URL}/articulos/${articulo.codArticulo}`
+        const payload = {
+          nombreArt: formData.nombreArt,
+          descripArt: formData.descripArt,
+          demandaAnual: formData.demandaAnual,
+          stockActual: formData.stockActual,
+          inventarioMax: formData.inventarioMax,
+          stockSeguridad: formData.stockSeguridad,
+          nivelServicio: formData.nivelServicio,
+          desviacionEstandar: formData.desviacionEstandar,
+          modeloInventario: formData.modeloInventario,
+          proveedorPredeterminado: formData.proveedorPredeterminado,
+        }
 
-      const payload: any = {
-        nombreArt: formData.nombreArt,
-        descripArt: formData.descripArt,
-        demandaAnual: formData.demandaAnual,
-        stockActual: formData.stockActual,
-        inventarioMax: formData.inventarioMax,
-        stockSeguridad: formData.stockSeguridad,
-        modeloInventario: formData.modeloInventario,
-        proveedorPredeterminado: formData.proveedorPredeterminado,
+        const response = await fetch(url, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        })
+
+        if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`)
+      } else {
+        // Creación - usar FormData para imagen
+        const fd = new FormData()
+        fd.append("nombreArt", formData.nombreArt)
+        fd.append("descripArt", formData.descripArt)
+        fd.append("demandaAnual", String(formData.demandaAnual))
+        fd.append("stockActual", String(formData.stockActual))
+        fd.append("inventarioMax", String(formData.inventarioMax))
+        fd.append("stockSeguridad", String(formData.stockSeguridad))
+        fd.append("nivelServicio", String(formData.nivelServicio))
+        fd.append("desviacionEstandar", String(formData.desviacionEstandar))
+        fd.append("modeloInventario", formData.modeloInventario)
+        if (formData.archivo) {
+          fd.append("archivo", formData.archivo)
+        }
+
+        const response = await fetch(`${API_BASE_URL}/articulos/con-imagen`, { 
+          method: "POST", 
+          body: fd 
+        })
+        
+        if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`)
       }
-
-      const response = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      })
-
-      if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`)
 
       toast({
         title: "Éxito",
@@ -202,15 +223,18 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
                     required
                   />
                 </div>
+                
 
                 <div className="space-y-3">
                   <Label htmlFor="modeloInventario" className="text-gray-300 font-medium">
                     Modelo de Inventario <span className="text-red-400">*</span>
                   </Label>
+                  
                   <Select
-                    value={formData.modeloInventario}
-                    onValueChange={(value) => handleInputChange("modeloInventario", value)}
-                  >
+
+                      value={formData.modeloInventario}
+                      onValueChange={(value) => handleInputChange("modeloInventario", value)}
+                    >
                     <SelectTrigger className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12">
                       <SelectValue placeholder="Seleccionar modelo" />
                     </SelectTrigger>
@@ -345,118 +369,72 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
                   value={formData.stockSeguridad}
                   onChange={(e) => handleInputChange("stockSeguridad", Number(e.target.value))}
                   className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12"
+                  required
                 />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <Label htmlFor="nivelServicio" className="text-gray-300 font-medium">
+                    Nivel de Servicio %
+                  </Label>
+                  <Input
+                    id="nivelServicio"
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={formData.nivelServicio}
+                    onChange={(e) => handleInputChange("nivelServicio", Number(e.target.value))}
+                    className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12"
+                    required
+                  />
+                </div>
+                <div className="space-y-3">
+                  <Label htmlFor="desviacionEstandar" className="text-gray-300 font-medium">
+                    Desviación Estándar
+                  </Label>
+                  <Input
+                    id="desviacionEstandar"
+                    type="number"
+                    min={0}
+                    value={formData.desviacionEstandar}
+                    onChange={(e) => handleInputChange("desviacionEstandar", Number(e.target.value))}
+                    className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12"
+                    required
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Costos (Solo lectura) */}
+            {/* Imagen */}
             <div className="space-y-6">
               <div className="flex items-center space-x-2 pb-3 border-b border-gray-700/30">
-                <div className="w-6 h-6 bg-yellow-600/20 rounded-lg flex items-center justify-center">
-                  <Settings className="w-3 h-3 text-yellow-400" />
+                <div className="w-6 h-6 bg-green-600/20 rounded-lg flex items-center justify-center">
+                  <Package className="w-3 h-3 text-green-400" />
                 </div>
-                <h3 className="text-lg font-semibold text-white">Costos (Calculados Automáticamente)</h3>
+                <h3 className="text-lg font-semibold text-white">Imagen</h3>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {!articulo && (
                 <div className="space-y-3">
-                  <Label htmlFor="costoCompra" className="text-gray-300 font-medium">
-                    Costo Compra
+                  <Label htmlFor="archivo" className="text-gray-300 font-medium">
+                    Imagen del Artículo
                   </Label>
                   <Input
-                    id="costoCompra"
-                    type="number"
-                    min={0}
-                    step={0.01}
-                    value={formData.costoCompra}
-                    onChange={(e) => handleInputChange("costoCompra", Number(e.target.value))}
-                    className="bg-gray-600/30 border-gray-600/30 text-gray-400 h-12"
-                    required
-                    disabled
+                    id="archivo"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12 file:bg-red-600 file:text-white file:border-0 file:rounded-md file:px-4 file:py-2 file:mr-4"
                   />
                 </div>
-                <div className="space-y-3">
-                  <Label htmlFor="cgi" className="text-gray-300 font-medium">
-                    CGI
-                  </Label>
-                  <Input
-                    id="cgi"
-                    type="number"
-                    min={0}
-                    step={0.01}
-                    value={formData.cgi}
-                    onChange={(e) => handleInputChange("cgi", Number(e.target.value))}
-                    className="bg-gray-600/30 border-gray-600/30 text-gray-400 h-12"
-                    required
-                    disabled
-                  />
+              )}
+              
+              {articulo && (
+                <div className="text-gray-400 text-sm">
+                  La imagen no se puede modificar durante la edición
                 </div>
-                <div className="space-y-3">
-                  <Label htmlFor="costoAlmacenamiento" className="text-gray-300 font-medium">
-                    Costo Almacenamiento
-                  </Label>
-                  <Input
-                    id="costoAlmacenamiento"
-                    type="number"
-                    min={0}
-                    step={0.01}
-                    value={formData.costoAlmacenamiento}
-                    onChange={(e) => handleInputChange("costoAlmacenamiento", Number(e.target.value))}
-                    className="bg-gray-600/30 border-gray-600/30 text-gray-400 h-12"
-                    required
-                    disabled
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-3">
-                  <Label htmlFor="loteOptimo" className="text-gray-300 font-medium">
-                    Lote Óptimo
-                  </Label>
-                  <Input
-                    id="loteOptimo"
-                    type="number"
-                    min={0}
-                    value={formData.loteOptimo}
-                    onChange={(e) => handleInputChange("loteOptimo", Number(e.target.value))}
-                    className="bg-gray-600/30 border-gray-600/30 text-gray-400 h-12"
-                    required
-                    disabled
-                  />
-                </div>
-                <div className="space-y-3">
-                  <Label htmlFor="puntoPedido" className="text-gray-300 font-medium">
-                    Punto de Pedido
-                  </Label>
-                  <Input
-                    id="puntoPedido"
-                    type="number"
-                    min={0}
-                    value={formData.puntoPedido}
-                    onChange={(e) => handleInputChange("puntoPedido", Number(e.target.value))}
-                    className="bg-gray-600/30 border-gray-600/30 text-gray-400 h-12"
-                    required
-                    disabled
-                  />
-                </div>
-                <div className="space-y-3">
-                  <Label htmlFor="costoPedido" className="text-gray-300 font-medium">
-                    Costo Pedido
-                  </Label>
-                  <Input
-                    id="costoPedido"
-                    type="number"
-                    min={0}
-                    step={0.01}
-                    value={formData.costoPedido}
-                    onChange={(e) => handleInputChange("costoPedido", Number(e.target.value))}
-                    className="bg-gray-600/30 border-gray-600/30 text-gray-400 h-12"
-                    required
-                    disabled
-                  />
-                </div>
-              </div>
+              )}
             </div>
 
             {/* Botones */}
