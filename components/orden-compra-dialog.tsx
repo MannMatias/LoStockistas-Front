@@ -26,7 +26,7 @@ interface Articulo {
   loteOptimo: number
   puntoPedido: number
   inventarioMax: number
-  costoCompra: number
+  costoPedido: number
   proveedorPredeterminado: Proveedor
 }
 
@@ -43,7 +43,7 @@ export function OrdenCompraDialog({ articulo, onSave, onCancel }: OrdenCompraDia
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
 
-  const montoTotal = cantidad * articulo.costoCompra
+  const montoTotal = cantidad * articulo.costoPedido
   const stockResultante = articulo.stockActual + cantidad
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -139,7 +139,7 @@ export function OrdenCompraDialog({ articulo, onSave, onCancel }: OrdenCompraDia
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-300">Costo Unitario:</span>
-                  <span className="text-white">{formatPrice(articulo.costoCompra)}</span>
+                  <span className="text-white">{formatPrice(articulo.costoPedido)}</span>
                 </div>
               </div>
             </div>
@@ -190,7 +190,7 @@ export function OrdenCompraDialog({ articulo, onSave, onCancel }: OrdenCompraDia
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-300">Precio Unitario:</span>
-                    <span className="text-white">{formatPrice(articulo.costoCompra)}</span>
+                    <span className="text-white">{formatPrice(articulo.costoPedido)}</span>
                   </div>
                   <div className="flex justify-between font-semibold text-lg border-t border-gray-600 pt-2">
                     <span className="text-gray-300">Total:</span>

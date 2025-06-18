@@ -4,16 +4,18 @@ import { useState, useEffect } from "react"
 import {
   Search,
   Plus,
-  Filter,
   MoreHorizontal,
   Package,
   TrendingUp,
   AlertTriangle,
   CheckCircle,
-  Loader2,
   ShoppingCart,
   DollarSign,
   Link,
+  Eye,
+  Edit,
+  Trash2,
+  RefreshCw,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -27,9 +29,7 @@ import { ArticuloCreacion } from "@/components/articulo-creacion"
 import { VentaForm } from "@/components/venta-form"
 import { OrdenCompraDialog } from "@/components/orden-compra-dialog"
 
-import  OrdenForm  from "@/components/orden-form"
-import { set } from "date-fns"
-
+import OrdenForm from "@/components/orden-form"
 
 interface Proveedor {
   codProveedor: number
@@ -39,16 +39,15 @@ interface Proveedor {
   emailProveedor: string
 }
 
-
 interface Articulo {
   codArticulo: number
   nombreArt: string
   descripArt: string
   demandaAnual: number
   costoAlmacenamiento: number
-  costoPedido: number
   costoCompra: number
   stockActual: number
+  costoPedido: number
   fechaHoraBajaArticulo?: string
   cgi: number
   loteOptimo: number
@@ -60,7 +59,6 @@ interface Articulo {
   proveedorPredeterminado: Proveedor
 }
 
-
 interface InventoryStats {
   totalArticulos: number
   stockNormal: number
@@ -70,12 +68,12 @@ interface InventoryStats {
 }
 
 // Configuración de la API
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
 
 export default function InventoryManagement() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedModelo, setSelectedModelo] = useState("Todos")
-  const [mostrarSoloCriticos, setMostrarSoloCriticos] = useState(false);
+  const [mostrarSoloCriticos, setMostrarSoloCriticos] = useState(false)
   const [articulos, setArticulos] = useState<Articulo[]>([])
   const [proveedores, setProveedores] = useState<Proveedor[]>([])
   const [loading, setLoading] = useState(true)
@@ -91,8 +89,8 @@ export default function InventoryManagement() {
   const [editingArticulo, setEditingArticulo] = useState<Articulo | null>(null)
   const [showOrdenCompra, setShowOrdenCompra] = useState(false)
   const [selectedArticulo, setSelectedArticulo] = useState<Articulo | null>(null)
-  const [showVentaForm, setShowVentaForm] = useState(false);
-  const [showOrdenForm, setShowOrdenForm] = useState(false);
+  const [showVentaForm, setShowVentaForm] = useState(false)
+  const [showOrdenForm, setShowOrdenForm] = useState(false)
   const { toast } = useToast()
 
   // Función para obtener todos los artículos
@@ -123,42 +121,42 @@ export default function InventoryManagement() {
   //Fetch artículos con stock crítico
   const fetchArticulosCriticos = async () => {
     try {
-      setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/articulos/stock-critico`);
+      setLoading(true)
+      const response = await fetch(`${API_BASE_URL}/articulos/stock-critico`)
 
       if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
+        throw new Error(`Error ${response.status}: ${response.statusText}`)
       }
 
-      const data = await response.json();
-      setArticulos(data);
-      updateStats(data);
+      const data = await response.json()
+      setArticulos(data)
+      updateStats(data)
     } catch (error) {
-      console.error("Error fetching critical stock articulos:", error);
+      console.error("Error fetching critical stock articulos:", error)
       toast({
         title: "Error",
         description: "No se pudieron cargar los artículos con stock crítico",
         variant: "destructive",
-      });
+      })
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   // Función para obtener proveedores
   const fetchProveedores = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/proveedores`);
-      const text = await response.text();
-      setProveedores(JSON.parse(text));
+      const response = await fetch(`${API_BASE_URL}/proveedores`)
+      const text = await response.text()
+      setProveedores(JSON.parse(text))
       try {
-        const data = JSON.parse(text);
+        const data = JSON.parse(text)
         // Usá data normalmente
       } catch (err) {
-        console.error("JSON inválido:", text);
+        console.error("JSON inválido:", text)
       }
     } catch (err) {
-      console.error("Error fetch:", err);
+      console.error("Error fetch:", err)
     }
   }
 
@@ -251,15 +249,15 @@ export default function InventoryManagement() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "normal":
-        return "bg-green-500"
+        return "bg-green-600"
       case "bajo":
-        return "bg-yellow-500"
+        return "bg-yellow-600"
       case "critico":
-        return "bg-orange-500"
+        return "bg-orange-600"
       case "sin-stock":
-        return "bg-red-500"
+        return "bg-red-600"
       default:
-        return "bg-gray-500"
+        return "bg-gray-600"
     }
   }
 
@@ -279,7 +277,7 @@ export default function InventoryManagement() {
   }
 
   const formatPrice = (price: number) => {
-if (price === null) return "$0"
+    if (price === null) return "$0"
 
     return `$${price.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`
   }
@@ -315,129 +313,159 @@ if (price === null) return "$0"
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-red-500" />
-          <p className="text-gray-400">Cargando inventario...</p>
+          <div className="relative">
+            <div className="w-20 h-20 border-4 border-gray-300 border-t-red-600 rounded-full animate-spin mx-auto mb-6"></div>
+            <div
+              className="absolute inset-0 w-20 h-20 border-4 border-transparent border-t-red-500 rounded-full animate-spin mx-auto"
+              style={{ animationDirection: "reverse", animationDuration: "1.5s" }}
+            ></div>
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-2">Cargando Inventario</h2>
+          <p className="text-gray-400">Preparando tu dashboard...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen bg-gray-900">
       {/* Header */}
-      <header className="bg-gray-800 border-b border-gray-700">
-        <div className="container mx-auto px-4 py-4">
+      <header className="bg-gray-800/95 backdrop-blur-md border-b border-gray-700 sticky top-0 z-50">
+        <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
-                  <Package className="w-5 h-5 text-white" />
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-gradient-to-r from-red-600 to-red-700 rounded-xl flex items-center justify-center shadow-lg">
+                  <Package className="w-6 h-6 text-white" />
                 </div>
-                <h1 className="text-xl font-bold text-white">Gestión de Inventario</h1>
+                <div>
+                  <h1 className="text-2xl font-bold text-white">Gestión de Inventario</h1>
+                  <p className="text-gray-400 text-sm">Sistema inteligente de control</p>
+                </div>
               </div>
             </div>
 
-            <div className="flex items-center space-x-2">
-              {/* Botón que redirige a /ventordenes-as */}
-              <Button className="bg-white border-gray-700 text-gray-800 hover:bg-gray-700" onClick={() => window.location.href = '/ordenes-ventas'}>
-                Visualizar Ordenes
+            <div className="flex items-center space-x-3">
+              <Button
+                className="bg-gray-700 hover:bg-gray-600 border-gray-600 text-white transition-all duration-200"
+                onClick={() => (window.location.href = "/ordenes-ventas")}
+              >
+                <Eye className="w-4 h-4 mr-2" />
+                Ver Órdenes
               </Button>
-              <Button className="bg-white border-gray-700 text-gray-800 hover:bg-gray-700" onClick={() => window.location.href = '/proveedores'}>
-                Visualizar Proveedores
+              <Button
+                className="bg-gray-700 hover:bg-gray-600 border-gray-600 text-white transition-all duration-200"
+                onClick={() => (window.location.href = "/proveedores")}
+              >
+                <Link className="w-4 h-4 mr-2" />
+                Proveedores
               </Button>
               <Button
                 onClick={() => setShowVentaForm(true)}
-                className="bg-red-600 hover:bg-red-700 text-white ml-auto"
+                className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg transition-all duration-200"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Agregar Venta
+                Nueva Venta
               </Button>
-
-
-               <Button
+              <Button
                 onClick={() => setShowOrdenForm(true)}
-                className="bg-red-600 hover:bg-red-700 text-white ml-auto"
+                className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg transition-all duration-200"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Agregar Orden
+                Nueva Orden
               </Button>
-
-
-
-              {/* Botón para agregar artículo */}
-              <Button className="bg-red-600 hover:bg-red-700" onClick={() => setShowArticuloCreacion(true)}>
+              <Button
+                className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg transition-all duration-200"
+                onClick={() => setShowArticuloCreacion(true)}
+              >
                 <Plus className="w-4 h-4 mr-2" />
-                Agregar Artículo
+                Nuevo Artículo
               </Button>
             </div>
           </div>
         </div>
       </header>
-      <div className="container mx-auto px-4 py-6">
+
+      <div className="container mx-auto px-6 py-8">
         {/* Stats Cards */}
-        <div className="flex flex-wrap gap-4 mb-6 justify-between" >
-          <Card className="bg-gray-800 border-gray-700 w-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+          <Card className="bg-gray-800 border-gray-700 hover:bg-gray-750 transition-all duration-300 group">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-300">Total Artículos</CardTitle>
-              <Package className="h-4 w-4 text-gray-400" />
+              <CardTitle className="text-sm font-medium text-gray-400">Total Artículos</CardTitle>
+              <div className="p-2 bg-gray-600/20 rounded-lg group-hover:bg-gray-600/30 transition-colors">
+                <Package className="h-5 w-5 text-purple-300" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white">{stats.totalArticulos}</div>
+              <div className="text-3xl font-bold text-white mb-1">{stats.totalArticulos}</div>
+              <p className="text-xs text-gray-400">Total Productos Registrados</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gray-800 border-gray-700 flex-1">
+          <Card className="bg-gray-800 border-gray-700 hover:bg-gray-750 transition-all duration-300 group">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-300">Stock Normal</CardTitle>
-              <CheckCircle className="h-4 w-4 text-green-500" />
+              <CardTitle className="text-sm font-medium text-green-200">Stock Normal</CardTitle>
+              <div className="p-2 bg-green-500/20 rounded-lg group-hover:bg-green-500/30 transition-colors">
+                <CheckCircle className="h-5 w-5 text-green-300" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-500">{stats.stockNormal}</div>
+              <div className="text-3xl font-bold text-green-400 mb-1">{stats.stockNormal}</div>
+              <p className="text-xs text-green-200">Buen Estado</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gray-800 border-gray-700 flex-1">
+          <Card className="bg-gray-800 border-gray-700 hover:bg-gray-750 transition-all duration-300 group">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-300">Stock Bajo</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-yellow-500" />
+              <CardTitle className="text-sm font-medium text-yellow-200">Stock Bajo</CardTitle>
+              <div className="p-2 bg-yellow-500/20 rounded-lg group-hover:bg-yellow-500/30 transition-colors">
+                <AlertTriangle className="h-5 w-5 text-yellow-300" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-yellow-500">{stats.stockBajo}</div>
+              <div className="text-3xl font-bold text-yellow-400 mb-1">{stats.stockBajo}</div>
+              <p className="text-xs text-yellow-200">Requieren Atención</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gray-800 border-gray-700 flex-1">
+          <Card className="bg-gray-800 border-gray-700 hover:bg-gray-750 transition-all duration-300 group">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-300">Sin Stock</CardTitle>
-              <TrendingUp className="h-4 w-4 text-red-500" />
+              <CardTitle className="text-sm font-medium text-red-200">Sin Stock</CardTitle>
+              <div className="p-2 bg-red-500/20 rounded-lg group-hover:bg-red-500/30 transition-colors">
+                <TrendingUp className="h-5 w-5 text-red-300" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-500">{stats.sinStock}</div>
+              <div className="text-3xl font-bold text-red-400 mb-1">{stats.sinStock}</div>
+              <p className="text-xs text-red-200">Productos Agotados</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gray-800 border-gray-700 flex-1">
+          <Card className="bg-gray-800 border-gray-700 hover:bg-gray-750 transition-all duration-300 group">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-300">Valor Total</CardTitle>
-              <DollarSign className="h-4 w-4 text-gray-500" />
+              <CardTitle className="text-sm font-medium text-blue-200">Valor Total</CardTitle>
+              <div className="p-2 bg-blue-500/20 rounded-lg group-hover:bg-blue-500/30 transition-colors">
+                <DollarSign className="h-5 w-5 text-blue-300" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-lg font-bold text-gray-500">{formatPrice(stats.valorTotalInventario)}</div>
+              <div className="text-2xl font-bold text-blue-400 mb-1">{formatPrice(stats.valorTotalInventario)}</div>
+              <p className="text-xs text-blue-200">Valor Total del Inventario</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        <div className="flex flex-col lg:flex-row gap-4 mb-8">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <Input
               placeholder="Buscar artículos por nombre o código..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-gray-800 border-gray-700 text-white placeholder-gray-400"
+              className="pl-12 h-12 bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:border-red-500 focus:ring-red-500/20"
             />
           </div>
 
@@ -445,38 +473,38 @@ if (price === null) return "$0"
             value={selectedModelo}
             onValueChange={(value) => {
               if (value === "CRITICO") {
-                fetchArticulosCriticos();
+                fetchArticulosCriticos()
               } else {
-                setSelectedModelo(value);
-                fetchArticulos();
+                setSelectedModelo(value)
+                fetchArticulos()
               }
             }}
           >
-            <SelectTrigger className="w-full sm:w-48 bg-gray-800 border-gray-700 text-white">
+            <SelectTrigger className="w-full lg:w-64 h-12 bg-gray-800 border-gray-700 text-white">
               <SelectValue placeholder="Modelo de Inventario" />
             </SelectTrigger>
-            <SelectContent className="bg-gray-800 border-gray-700">
-              <SelectItem value="Todos" className="text-white hover:bg-gray-700">
-                Todos
+            <SelectContent className="bg-slate-800 border-slate-700">
+              <SelectItem value="Todos" className="text-white hover:bg-slate-700">
+                Todos los modelos
               </SelectItem>
-              <SelectItem value="LOTEFIJO" className="text-white hover:bg-gray-700">
+              <SelectItem value="LOTEFIJO" className="text-white hover:bg-slate-700">
                 Lote Fijo
               </SelectItem>
-              <SelectItem value="INTERVALOFIJO" className="text-white hover:bg-gray-700">
+              <SelectItem value="INTERVALOFIJO" className="text-white hover:bg-slate-700">
                 Intervalo Fijo
               </SelectItem>
-              <SelectItem value="CRITICO" className="text-white hover:bg-gray-700">
-                Stock Bajo
+              <SelectItem value="CRITICO" className="text-white hover:bg-slate-700">
+                Stock Crítico
               </SelectItem>
             </SelectContent>
           </Select>
 
           <Button
             variant="outline"
-            className="border-gray-700 text-gray-800 hover:bg-gray-700"
+            className="h-12 bg-gray-800 border-gray-700 text-white hover:bg-gray-700 transition-all duration-200"
             onClick={fetchArticulos}
           >
-            <Filter className="w-4 h-4 mr-2" />
+            <RefreshCw className="w-4 h-4 mr-2" />
             Actualizar
           </Button>
         </div>
@@ -490,41 +518,40 @@ if (price === null) return "$0"
             return (
               <Card
                 key={articulo.codArticulo}
-                className="bg-gray-800 border-gray-700 hover:border-red-600 transition-colors"
+                className="bg-gray-800 border-gray-700 hover:bg-gray-750 hover:border-red-500/50 transition-all duration-300 group overflow-hidden"
               >
-               {articulo.urlImagen && (
-                  <img
-                    src={articulo.urlImagen}
-                    alt={articulo.nombreArt}
-                    className="w-full h-32 object-cover rounded-t-md"
-                  />
-                )}
-                <CardContent className="p-4">
-                  <div className="space-y-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-sm text-white line-clamp-2">{articulo.nombreArt}</h3>
-                        <p className="text-xs text-gray-400 mt-1">Código: {articulo.codArticulo}</p>
-                        
-                      </div>
+                {articulo.urlImagen ? (
+                  <div className="relative h-48 overflow-hidden">
+                    <img
+                      src={articulo.urlImagen || "/placeholder.svg"}
+                      alt={articulo.nombreArt}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                    <div className="absolute top-3 right-3">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-400 hover:text-white">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 bg-black/20 backdrop-blur-sm text-white hover:bg-black/40 rounded-full"
+                          >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent className="bg-gray-800 border-gray-700">
+                        <DropdownMenuContent className="bg-slate-800 border-slate-700">
                           <DropdownMenuItem
-                            className="text-white hover:bg-gray-700"
+                            className="text-white hover:bg-slate-700"
                             onClick={() => {
                               setEditingArticulo(articulo)
                               setShowArticuloForm(true)
                             }}
                           >
+                            <Edit className="w-4 h-4 mr-2" />
                             Editar
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            className="text-white hover:bg-gray-700"
+                            className="text-white hover:bg-slate-700"
                             onClick={() => {
                               const newStock = prompt("Nuevo stock:", articulo.stockActual.toString())
                               if (newStock && !isNaN(Number(newStock))) {
@@ -532,11 +559,12 @@ if (price === null) return "$0"
                               }
                             }}
                           >
+                            <RefreshCw className="w-4 h-4 mr-2" />
                             Actualizar Stock
                           </DropdownMenuItem>
                           {needsReorder && (
                             <DropdownMenuItem
-                              className="text-blue-400 hover:bg-gray-700"
+                              className="text-blue-400 hover:bg-slate-700"
                               onClick={() => {
                                 setSelectedArticulo(articulo)
                                 setShowOrdenCompra(true)
@@ -547,58 +575,150 @@ if (price === null) return "$0"
                             </DropdownMenuItem>
                           )}
                           <DropdownMenuItem
-                            className="text-red-400 hover:bg-gray-700"
+                            className="text-red-400 hover:bg-slate-700"
                             onClick={() => {
                               if (confirm("¿Estás seguro de que quieres eliminar este artículo?")) {
                                 deleteArticulo(articulo.codArticulo)
                               }
                             }}
                           >
+                            <Trash2 className="w-4 h-4 mr-2" />
                             Eliminar
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
+                  </div>
+                ) : (
+                  <div className="h-48 bg-gradient-to-br from-gray-600/20 to-gray-500/20 flex items-center justify-center relative">
+                    <Package className="w-16 h-16 text-gray-400/50" />
+                    <div className="absolute top-3 right-3">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 bg-black/20 backdrop-blur-sm text-white hover:bg-black/40 rounded-full"
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="bg-slate-800 border-slate-700">
+                          <DropdownMenuItem
+                            className="text-white hover:bg-slate-700"
+                            onClick={() => {
+                              setEditingArticulo(articulo)
+                              setShowArticuloForm(true)
+                            }}
+                          >
+                            <Edit className="w-4 h-4 mr-2" />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-white hover:bg-slate-700"
+                            onClick={() => {
+                              const newStock = prompt("Nuevo stock:", articulo.stockActual.toString())
+                              if (newStock && !isNaN(Number(newStock))) {
+                                updateStock(articulo.codArticulo, Number(newStock))
+                              }
+                            }}
+                          >
+                            <RefreshCw className="w-4 h-4 mr-2" />
+                            Actualizar Stock
+                          </DropdownMenuItem>
+                          {needsReorder && (
+                            <DropdownMenuItem
+                              className="text-blue-400 hover:bg-slate-700"
+                              onClick={() => {
+                                setSelectedArticulo(articulo)
+                                setShowOrdenCompra(true)
+                              }}
+                            >
+                              <ShoppingCart className="w-4 h-4 mr-2" />
+                              Crear Orden
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem
+                            className="text-red-400 hover:bg-slate-700"
+                            onClick={() => {
+                              if (confirm("¿Estás seguro de que quieres eliminar este artículo?")) {
+                                deleteArticulo(articulo.codArticulo)
+                              }
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Eliminar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+                )}
 
-                    <div className="text-xs text-gray-400">
-                      <p>Proveedor: {articulo.proveedorPredeterminado ? articulo.proveedorPredeterminado.nombreProveedor : 'Sin Proveedor'}</p>
-                      <p>Modelo: {articulo.modeloInventario === "LOTEFIJO" ? "Lote Fijo" : "Intervalo Fijo"}</p>
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-bold text-lg text-white line-clamp-2 mb-1">{articulo.nombreArt}</h3>
+                      <p className="text-sm text-gray-400">Código: #{articulo.codArticulo}</p>
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <Badge variant="secondary" className={`${getStatusColor(status)} text-white text-xs`}>
+                      <Badge className={`${getStatusColor(status)} text-white text-xs px-3 py-1 font-medium`}>
                         {getStatusText(status)}
                       </Badge>
                       {needsReorder && (
-                        <Badge variant="secondary" className="bg-blue-600 text-white text-xs">
+                        <Badge className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-xs px-3 py-1 font-medium">
                           Reabastecer
                         </Badge>
                       )}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div>
-                        <span className="text-gray-400">Stock: </span>
-                        <span className="text-white font-semibold">{articulo.stockActual}</span>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-400">Proveedor:</span>
+                        <span className="text-white font-medium">
+                          {articulo.proveedorPredeterminado
+                            ? articulo.proveedorPredeterminado.nombreProveedor
+                            : "Sin Proveedor"}
+                        </span>
                       </div>
-                      <div>
-                        <span className="text-gray-400">Punto Pedido: </span>
-                        <span className="text-white">{articulo.puntoPedido}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-400">Lote Óptimo: </span>
-                        <span className="text-white">{articulo.loteOptimo}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-400">Stock Max: </span>
-                        <span className="text-white">{articulo.inventarioMax}</span>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-400">Modelo:</span>
+                        <span className="text-white font-medium">
+                          {articulo.modeloInventario === "LOTEFIJO" ? "Lote Fijo" : "Intervalo Fijo"}
+                        </span>
                       </div>
                     </div>
 
-                    <div className="pt-2 border-t border-gray-700">
-                      <div className="text-lg font-bold text-red-400">{formatPrice(articulo.costoCompra)}</div>
-                      <div className="text-xs text-gray-400">
-                        Valor en stock: {formatPrice(articulo.stockActual * articulo.costoCompra)}
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div className="bg-gray-700/50 rounded-lg p-3">
+                        <div className="text-gray-400 text-xs mb-1">Stock Actual</div>
+                        <div className="text-white font-bold text-lg">{articulo.stockActual}</div>
+                      </div>
+                      <div className="bg-gray-700/50 rounded-lg p-3">
+                        <div className="text-gray-400 text-xs mb-1">Punto Pedido</div>
+                        <div className="text-white font-bold text-lg">{articulo.puntoPedido}</div>
+                      </div>
+                      <div className="bg-gray-700/50 rounded-lg p-3">
+                        <div className="text-gray-400 text-xs mb-1">Lote Óptimo</div>
+                        <div className="text-white font-bold text-lg">{articulo.loteOptimo}</div>
+                      </div>
+                      <div className="bg-gray-700/50 rounded-lg p-3">
+                        <div className="text-gray-400 text-xs mb-1">Stock Máx</div>
+                        <div className="text-white font-bold text-lg">{articulo.inventarioMax}</div>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-white/10">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <div className="text-2xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
+                            {formatPrice(articulo.costoCompra)}
+                          </div>
+                          <div className="text-xs text-gray-400">
+                            Valor en stock: {formatPrice(articulo.stockActual * articulo.costoCompra)}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -609,10 +729,19 @@ if (price === null) return "$0"
         </div>
 
         {filteredArticulos.length === 0 && !loading && (
-          <div className="text-center py-12">
-            <Package className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-400 mb-2">No se encontraron artículos</h3>
-            <p className="text-gray-500">Intenta ajustar los filtros de búsqueda</p>
+          <div className="text-center py-16">
+            <div className="w-24 h-24 bg-gray-800/50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Package className="w-12 h-12 text-gray-400" />
+            </div>
+            <h3 className="text-2xl font-bold text-white mb-2">No se encontraron artículos</h3>
+            <p className="text-gray-400 mb-6">Intenta ajustar los filtros de búsqueda o agrega nuevos productos</p>
+            <Button
+              onClick={() => setShowArticuloCreacion(true)}
+              className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Agregar Primer Artículo
+            </Button>
           </div>
         )}
       </div>
@@ -640,26 +769,11 @@ if (price === null) return "$0"
       )}
 
       {/* Venta Form Modal */}
-      {
-        showVentaForm && (
-          <VentaForm
-            articulos={articulos}
-            onSuccess={handleVentaSaved}
-            onCancel={() => setShowVentaForm(false)}
-          />
-        )
-      }
+      {showVentaForm && (
+        <VentaForm articulos={articulos} onSuccess={handleVentaSaved} onCancel={() => setShowVentaForm(false)} />
+      )}
 
-
-      {
-        showOrdenForm && (
-          <OrdenForm
-            articulos={articulos}
-            onClose={handleOrdenFormCreated}
-          />
-        )
-      }
-
+      {showOrdenForm && <OrdenForm onClose={handleOrdenFormCreated} />}
 
       {/* Orden Compra Dialog */}
       {showOrdenCompra && selectedArticulo && (
