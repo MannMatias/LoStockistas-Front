@@ -700,7 +700,7 @@ export default function InventoryManagement() {
                     <div className="grid grid-cols-2 gap-3 text-sm mt-3">
                       <div className="bg-gray-700/50 rounded-lg p-3">
                         <div className="text-gray-400 text-xs mb-1">Nivel Servicio</div>
-                        <div className="text-white font-bold text-lg">{articulo.nivelServicio}%</div>
+                        <div className="text-white font-bold text-lg">{articulo.nivelServicio*100}%</div>
                       </div>
                       <div className="bg-gray-700/50 rounded-lg p-3">
                         <div className="text-gray-400 text-xs mb-1">Desv. Estándar</div>
