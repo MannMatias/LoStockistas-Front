@@ -3,13 +3,12 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { Calendar, DollarSign, Package, User } from "lucide-react"
+import { Calendar, Package, User } from "lucide-react"
 
 interface Articulo {
   codArticulo: number
   nombreArt: string
   descripArt: string
-  costoCompra: number
   proveedorPredeterminado: {
     nombreProveedor: string
   }
@@ -31,10 +30,6 @@ interface VentaDetalleDialogProps {
 export function VentaDetalleDialog({ venta, open, onClose }: VentaDetalleDialogProps) {
   if (!venta) return null
 
-  const formatPrice = (price: number) => {
-    return `$${price.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`
-  }
-
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     return date.toLocaleDateString("es-AR", {
@@ -45,9 +40,6 @@ export function VentaDetalleDialog({ venta, open, onClose }: VentaDetalleDialogP
       minute: "2-digit",
     })
   }
-
-  const precioUnitario = venta.articulo.costoCompra * 1.3 // Asumiendo un margen del 30%
-  const total = venta.cantProducto * precioUnitario
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -77,9 +69,8 @@ export function VentaDetalleDialog({ venta, open, onClose }: VentaDetalleDialogP
                 <span className="ml-2">{venta.articulo.proveedorPredeterminado.nombreProveedor}</span>
               </div>
               <div className="flex items-center text-green-400 font-bold">
-                <DollarSign className="w-4 h-4 mr-2 text-green-400" />
-                <span>Total:</span>
-                <span className="ml-2">{formatPrice(total)}</span>
+                <span>Cantidad:</span>
+                <span className="ml-2">{venta.cantProducto} unidades</span>
               </div>
             </div>
           </div>
@@ -93,8 +84,6 @@ export function VentaDetalleDialog({ venta, open, onClose }: VentaDetalleDialogP
                     <TableHead className="text-gray-400">Artículo</TableHead>
                     <TableHead className="text-gray-400">Código</TableHead>
                     <TableHead className="text-gray-400 text-right">Cantidad</TableHead>
-                    <TableHead className="text-gray-400 text-right">Precio Unitario</TableHead>
-                    <TableHead className="text-gray-400 text-right">Subtotal</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -102,8 +91,6 @@ export function VentaDetalleDialog({ venta, open, onClose }: VentaDetalleDialogP
                     <TableCell className="font-medium">{venta.articulo.nombreArt}</TableCell>
                     <TableCell>{venta.articulo.codArticulo}</TableCell>
                     <TableCell className="text-right">{venta.cantProducto}</TableCell>
-                    <TableCell className="text-right">{formatPrice(precioUnitario)}</TableCell>
-                    <TableCell className="text-right font-semibold text-green-400">{formatPrice(total)}</TableCell>
                   </TableRow>
                 </TableBody>
               </Table>

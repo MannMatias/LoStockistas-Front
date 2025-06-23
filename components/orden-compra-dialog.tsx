@@ -28,6 +28,7 @@ interface Articulo {
   puntoPedido: number
   inventarioMax: number
   proveedorPredeterminado: Proveedor | null
+  modeloInventario: string
 }
 
 interface ArticuloProveedorInfo {
@@ -60,6 +61,7 @@ export function OrdenCompraDialog({ articulo, onSave, onCancel }: OrdenCompraDia
   const [loading, setLoading] = useState(false)
   const [loadingInitialData, setLoadingInitialData] = useState(true)
   const [error, setError] = useState<string>("")
+  const [showConfirmation, setShowConfirmation] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -147,12 +149,27 @@ export function OrdenCompraDialog({ articulo, onSave, onCancel }: OrdenCompraDia
       toast({ title: "Error", description: "Debe seleccionar un proveedor.", variant: "destructive" })
       return
     }
+
+    // Verificar si es modelo Lote Fijo y si la cantidad no alcanza el punto de pedido
+    if (articulo.modeloInventario === "LOTEFIJO") {
+      const stockResultante = articulo.stockActual + cantidad
+      if (stockResultante <= articulo.puntoPedido) {
+        setShowConfirmation(true)
+        return
+      }
+    }
+
+    // Si no necesita confirmación, proceder directamente
+    await submitOrder()
+  }
+
+  const submitOrder = async () => {
     setLoading(true)
     try {
       const ordenCompraData = {
         cantidad: cantidad,
         codArticulo: articulo.codArticulo,
-        codProveedor: selectedProviderInfo.proveedor.codProveedor,
+        codProveedor: selectedProviderInfo!.proveedor.codProveedor,
       }
       const response = await fetch(`${API_BASE_URL}/ordenes`, {
         method: "POST",
@@ -173,6 +190,15 @@ export function OrdenCompraDialog({ articulo, onSave, onCancel }: OrdenCompraDia
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleConfirmOrder = async () => {
+    setShowConfirmation(false)
+    await submitOrder()
+  }
+
+  const handleCancelOrder = () => {
+    setShowConfirmation(false)
   }
 
   const formatPrice = (price: number) => `$${price.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`
@@ -205,6 +231,7 @@ export function OrdenCompraDialog({ articulo, onSave, onCancel }: OrdenCompraDia
                   <div className="flex justify-between"><span className="text-gray-400 font-medium">Stock Actual:</span><span className="text-white font-bold">{articulo.stockActual}</span></div>
                   <div className="flex justify-between"><span className="text-gray-400 font-medium">Punto de Pedido:</span><span className="text-yellow-400 font-bold">{articulo.puntoPedido}</span></div>
                   <div className="flex justify-between"><span className="text-gray-400 font-medium">Lote Óptimo:</span><span className="text-green-400 font-bold">{articulo.loteOptimo}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-400 font-medium">Modelo:</span><span className="text-white">{articulo.modeloInventario === "LOTEFIJO" ? "Lote Fijo" : "Intervalo Fijo"}</span></div>
                 </div>
               </div>
             </div>
@@ -280,7 +307,15 @@ export function OrdenCompraDialog({ articulo, onSave, onCancel }: OrdenCompraDia
                   </div>
                   <div className="border-t border-gray-600/50 pt-4">
                     <div className="flex justify-between items-center text-lg"><span className="text-gray-300 font-semibold">Total:</span><span className="text-red-400 font-bold text-xl">{formatPrice(montoTotal)}</span></div>
-                    <div className="flex justify-between items-center mt-2"><span className="text-gray-400 font-medium">Stock Resultante:</span><span className="text-green-400 font-bold">{stockResultante} unidades</span></div>
+                    <div className="flex justify-between items-center mt-2"><span className="text-gray-400 font-medium">Stock Resultante:</span><span className={`font-bold ${stockResultante <= articulo.puntoPedido ? 'text-red-400' : 'text-green-400'}`}>{stockResultante} unidades</span></div>
+                    {articulo.modeloInventario === "LOTEFIJO" && stockResultante <= articulo.puntoPedido && (
+                      <div className="mt-3 p-2 bg-yellow-900/30 border border-yellow-700/50 rounded-md">
+                        <div className="flex items-center text-yellow-300 text-sm">
+                          <AlertTriangle className="w-4 h-4 mr-2 text-yellow-400" />
+                          <span>⚠️ Esta orden requerirá confirmación (no supera el punto de pedido)</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -294,6 +329,50 @@ export function OrdenCompraDialog({ articulo, onSave, onCancel }: OrdenCompraDia
           </form>
         </CardContent>
       </Card>
+
+      {/* Popup de confirmación */}
+      {showConfirmation && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
+          <Card className="bg-gray-800/95 backdrop-blur-md border-gray-700/50 w-full max-w-md shadow-2xl">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6 border-b border-gray-700/50">
+              <CardTitle className="text-lg font-bold text-white flex items-center">
+                <div className="w-8 h-8 bg-gradient-to-r from-yellow-600 to-yellow-700 rounded-lg flex items-center justify-center mr-3">
+                  <AlertTriangle className="w-4 h-4 text-white" />
+                </div>
+                Confirmar Orden
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <Alert variant="destructive" className="bg-yellow-900/50 border-yellow-700 text-yellow-300 mb-4">
+                <AlertTriangle className="h-4 w-4 !text-yellow-400" />
+                <AlertTitle>Atención</AlertTitle>
+                <AlertDescription>
+                  Con esta orden, el stock resultante ({stockResultante} unidades) 
+                  no superará el punto de pedido ({articulo.puntoPedido} unidades) para el modelo Lote Fijo.
+                  <br /><br />
+                  ¿Desea continuar con la orden de todas formas?
+                </AlertDescription>
+              </Alert>
+              
+              <div className="flex justify-end space-x-3">
+                <Button
+                  variant="ghost"
+                  onClick={handleCancelOrder}
+                  className="text-gray-400 hover:text-white hover:bg-gray-700/50"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleConfirmOrder}
+                  className="bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white shadow-lg"
+                >
+                  Confirmar Orden
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }

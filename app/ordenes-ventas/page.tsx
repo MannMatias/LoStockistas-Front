@@ -397,16 +397,6 @@ export default function ArticleOrdersSalesPage() {
     setSelectedEstado("Todos")
   }
 
-  // Reemplazar la función handleArticleSelect existente with the new functions
-  // Eliminar o comentar la función original handleArticleSelect
-  // const handleArticleSelect = async (articulo: Articulo) => {
-  //   setSelectedArticle(articulo)
-  //   setCurrentView("details")
-  //   setLoading(true)
-  //   await Promise.all([fetchOrdenesArticulo(articulo.codArticulo), fetchVentasArticulo(articulo.codArticulo)])
-  //   setLoading(false)
-  // }
-
   // Actualizar estadísticas del artículo seleccionado
   useEffect(() => {
     if (selectedArticle && ordenesCompra.length >= 0 && ventas.length >= 0) {
@@ -414,7 +404,6 @@ export default function ArticleOrdersSalesPage() {
       const ordenesPendientes = ordenesCompra.filter((o) => o.estado.nombreEstadoOC === "Pendiente").length
       const ordenesCompletadas = ordenesCompra.filter((o) => o.estado.nombreEstadoOC === "Completada").length
       const totalVentas = ventas.length
-      const montoTotalVentas = ventas.reduce((total, v) => total + v.cantProducto * v.articulo.costoCompra * 1.3, 0)
       const montoTotalOrdenes = ordenesCompra.reduce((total, o) => total + o.montoCompra, 0)
 
       setStats({
@@ -422,7 +411,7 @@ export default function ArticleOrdersSalesPage() {
         ordenesPendientes,
         ordenesCompletadas,
         totalVentas,
-        montoTotalVentas,
+        montoTotalVentas: 0, // No se puede calcular sin precio unitario
         montoTotalOrdenes,
       })
     }
@@ -965,35 +954,29 @@ export default function ArticleOrdersSalesPage() {
 
               <Card className="bg-gray-800 border-gray-700 flex-1">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-300">Monto Total Ventas</CardTitle>
-                  <DollarSign className="h-4 w-4 text-green-500" />
+                  <CardTitle className="text-sm font-medium text-gray-300">Cantidad Total Vendida</CardTitle>
+                  <Package className="h-4 w-4 text-green-500" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-lg font-bold text-green-500">{formatPrice(stats.montoTotalVentas)}</div>
+                  <div className="text-lg font-bold text-green-500">
+                    {ventas.reduce((total, v) => total + v.cantProducto, 0)} unidades
+                  </div>
                 </CardContent>
               </Card>
 
               <Card className="bg-gray-800 border-gray-700 flex-1">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-300">Valor Promedio de Ventas</CardTitle>
-                  <DollarSign className="h-4 w-4 text-blue-500" />
+                  <CardTitle className="text-sm font-medium text-gray-300">Promedio por Venta</CardTitle>
+                  <Package className="h-4 w-4 text-blue-500" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-lg font-bold text-blue-500">
-                    {stats.totalVentas > 0 ? formatPrice(stats.montoTotalVentas / stats.totalVentas) : formatPrice(0)}
+                    {stats.totalVentas > 0 
+                      ? Math.round(ventas.reduce((total, v) => total + v.cantProducto, 0) / stats.totalVentas)
+                      : 0} unidades
                   </div>
                 </CardContent>
               </Card>
-
-              {/* <Card className="bg-gray-800 border-gray-700 flex-1">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-300">Ganancia Estimada</CardTitle>
-                  <DollarSign className="h-4 w-4 text-green-500" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-lg font-bold text-green-500">{formatPrice(stats.montoTotalVentas * 0.3)}</div>
-                </CardContent>
-              </Card> */}
             </div>
 
             {/* Ventas Content */}
@@ -1037,36 +1020,25 @@ export default function ArticleOrdersSalesPage() {
                           <TableHead className="text-gray-400">Código</TableHead>
                           <TableHead className="text-gray-400">Fecha</TableHead>
                           <TableHead className="text-gray-400">Cantidad</TableHead>
-                          <TableHead className="text-gray-400">Precio Unitario</TableHead>
-                          <TableHead className="text-gray-400 text-right">Total</TableHead>
                           <TableHead className="text-gray-400 w-10"></TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {filteredVentas.length > 0 ? (
-                          filteredVentas.map((venta) => {
-                            const precioUnitario = venta.articulo.costoCompra * 1.3
-                            const total = venta.cantProducto * precioUnitario
-
-                            return (
-                              <TableRow key={venta.codVenta} className="border-gray-700 hover:bg-gray-700">
-                                <TableCell className="font-medium text-white">#{venta.codVenta}</TableCell>
-                                <TableCell className="font-medium text-white">{venta.articulo.nombreArt}</TableCell>
-                                <TableCell className="font-medium text-white">{venta.articulo.codArticulo}</TableCell>
-                                <TableCell className="font-medium text-white">{formatDate(venta.fechaVenta)}</TableCell>
-                                <TableCell className="font-medium text-white">{venta.cantProducto}</TableCell>
-                                <TableCell className="font-medium text-white">{formatPrice(precioUnitario)}</TableCell>
-                                <TableCell className="text-right font-semibold text-green-400">
-                                  {formatPrice(total)}
-                                </TableCell>
-                                <TableCell></TableCell>
-                              </TableRow>
-                            )
-                          })
+                          filteredVentas.map((venta) => (
+                            <TableRow key={venta.codVenta} className="border-gray-700 hover:bg-gray-700">
+                              <TableCell className="font-medium text-white">#{venta.codVenta}</TableCell>
+                              <TableCell className="font-medium text-white">{venta.articulo.nombreArt}</TableCell>
+                              <TableCell className="font-medium text-white">{venta.articulo.codArticulo}</TableCell>
+                              <TableCell className="font-medium text-white">{formatDate(venta.fechaVenta)}</TableCell>
+                              <TableCell className="font-medium text-white">{venta.cantProducto}</TableCell>
+                              <TableCell></TableCell>
+                            </TableRow>
+                          ))
                         ) : (
                           <TableRow className="border-gray-700">
                             <TableCell
-                              colSpan={8}
+                              colSpan={6}
                               className="h-24 text-center text-gray-400 hover:bg-gray-700 bg-gray-800"
                             >
                               No se encontraron ventas para este artículo

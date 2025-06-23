@@ -16,6 +16,7 @@ import {
   Edit,
   Trash2,
   RefreshCw,
+  X,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -28,8 +29,6 @@ import { ArticuloForm } from "@/components/articulo-form"
 import { ArticuloCreacion } from "@/components/articulo-creacion"
 import VentaForm from "@/components/venta-form"
 import { OrdenCompraDialog } from "@/components/orden-compra-dialog"
-
-import OrdenForm from "@/components/orden-form"
 
 interface Proveedor {
   codProveedor: number
@@ -91,7 +90,7 @@ export default function InventoryManagement() {
   const [showOrdenCompra, setShowOrdenCompra] = useState(false)
   const [selectedArticulo, setSelectedArticulo] = useState<Articulo | null>(null)
   const [showVentaForm, setShowVentaForm] = useState(false)
-  const [showOrdenForm, setShowOrdenForm] = useState(false)
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null)
   const { toast } = useToast()
 
   // Función genérica para obtener artículos
@@ -292,7 +291,6 @@ export default function InventoryManagement() {
 
   const handleArticuloSaved = () => handleModalClose(setShowArticuloForm, setEditingArticulo)
   const handleVentaSaved = () => handleModalClose(setShowVentaForm)
-  const handleOrdenFormCreated = () => handleModalClose(setShowOrdenForm, setSelectedArticulo)
   const handleOrdenCompraCreated = () => handleModalClose(setShowOrdenCompra, setSelectedArticulo)
 
   if (loading) {
@@ -503,23 +501,26 @@ export default function InventoryManagement() {
             return (
               <Card
                 key={articulo.codArticulo}
-                className="bg-gray-800 border-gray-700 hover:bg-gray-750 hover:border-red-500/50 transition-all duration-300 group overflow-hidden"
+                className="bg-gray-800 border-gray-700 hover:bg-gray-750 hover:border-red-500/50 transition-all duration-300 group overflow-hidden shadow-lg hover:shadow-xl"
               >
                 {articulo.urlImagen ? (
-                  <div className="relative h-48 overflow-hidden">
+                  <div
+                    className="relative h-48 overflow-hidden bg-white cursor-pointer"
+                    onClick={() => articulo.urlImagen && setLightboxImage(articulo.urlImagen)}
+                  >
                     <img
-                      src={articulo.urlImagen || "/placeholder.svg"}
+                      src={articulo.urlImagen}
                       alt={articulo.nombreArt}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 rounded-lg "
+                      className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                    <div className="absolute top-3 right-3">
+                    <div className="absolute top-3 right-3 z-10">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0 bg-black/20 backdrop-blur-sm text-white hover:bg-black/40 rounded-full"
+                            className="h-8 w-8 p-0 bg-black/10 backdrop-blur-sm text-gray-800 hover:bg-black/20 rounded-full border border-gray-800/20"
+                            onClick={(e) => e.stopPropagation()}
                           >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
@@ -575,15 +576,21 @@ export default function InventoryManagement() {
                     </div>
                   </div>
                 ) : (
-                  <div className="h-48 bg-gradient-to-br from-gray-600/20 to-gray-500/20 flex items-center justify-center relative">
-                    <Package className="w-16 h-16 text-gray-400/50" />
+                  <div className="relative h-48 bg-gradient-to-br from-gray-700/50 to-gray-600/50 flex items-center justify-center overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-gray-600/30 to-gray-500/30" />
+                    <div className="relative z-10 flex flex-col items-center">
+                      <div className="w-16 h-16 bg-gray-600/50 rounded-full flex items-center justify-center mb-2 backdrop-blur-sm">
+                        <Package className="w-8 h-8 text-gray-400" />
+                      </div>
+                      <p className="text-xs text-gray-400 font-medium">Sin imagen</p>
+                    </div>
                     <div className="absolute top-3 right-3">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0 bg-black/20 backdrop-blur-sm text-white hover:bg-black/40 rounded-full"
+                            className="h-8 w-8 p-0 bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 rounded-full border border-white/20"
                           >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
@@ -599,7 +606,6 @@ export default function InventoryManagement() {
                             <Edit className="w-4 h-4 mr-2" />
                             Editar
                           </DropdownMenuItem>
-
                           {needsReorder && (
                             <DropdownMenuItem
                               className="text-blue-400 hover:bg-slate-700"
@@ -609,7 +615,7 @@ export default function InventoryManagement() {
                               }}
                             >
                               <ShoppingCart className="w-4 h-4 mr-2" />
-                              Crear Orden
+                              Crear Orden de Compra
                             </DropdownMenuItem>
                           )}
                           <DropdownMenuItem
@@ -754,8 +760,6 @@ export default function InventoryManagement() {
         <VentaForm articulos={articulos} onSuccess={handleVentaSaved} onCancel={() => setShowVentaForm(false)} />
       )}
 
-      {showOrdenForm && <OrdenForm onClose={handleOrdenFormCreated} />}
-
       {/* Orden Compra Dialog */}
       {showOrdenCompra && selectedArticulo && (
         <OrdenCompraDialog
@@ -766,6 +770,29 @@ export default function InventoryManagement() {
             setSelectedArticulo(null)
           }}
         />
+      )}
+
+      {/* Lightbox Modal */}
+      {lightboxImage && (
+        <div
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-[100]"
+          onClick={() => setLightboxImage(null)}
+        >
+          <img
+            src={lightboxImage}
+            alt="Vista ampliada"
+            className="max-w-4xl max-h-[90vh] object-contain rounded-lg shadow-2xl"
+            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking the image itself
+          />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setLightboxImage(null)}
+            className="absolute top-4 right-4 text-white hover:text-white hover:bg-white/20 rounded-full h-10 w-10"
+          >
+            <X className="h-6 w-6" />
+          </Button>
+        </div>
       )}
     </div>
   )
