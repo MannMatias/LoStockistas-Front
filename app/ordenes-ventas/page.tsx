@@ -12,6 +12,7 @@ import {
   Tag,
   ArrowLeft,
   Package,
+  RefreshCw,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -609,14 +610,14 @@ export default function ArticleOrdersSalesPage() {
 
               <Button
                 variant="outline"
-                className="border-gray-700 text-gray-800 hover:bg-gray-700"
+                className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700 transition-all duration-200"
                 onClick={() => {
                   fetchArticulos()
                 }}
                 disabled={loading || loadingCounts}
               >
-                <Filter className="w-4 h-4 mr-2" />
-                {loading || loadingCounts ? "Cargando..." : "Actualizar"}
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Actualizar
               </Button>
             </div>
 
@@ -807,10 +808,10 @@ export default function ArticleOrdersSalesPage() {
 
                   <Button
                     variant="outline"
-                    className="border-gray-700 text-gray-800 hover:bg-gray-700"
+                    className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700 transition-all duration-200"
                     onClick={() => selectedArticle && fetchOrdenesArticulo(selectedArticle.codArticulo)}
                   >
-                    <Filter className="w-4 h-4 mr-2" />
+                    <RefreshCw className="w-4 h-4 mr-2" />
                     Actualizar
                   </Button>
                 </div>
@@ -1001,10 +1002,10 @@ export default function ArticleOrdersSalesPage() {
 
                   <Button
                     variant="outline"
-                    className="border-gray-700 text-gray-800 hover:bg-gray-700"
+                    className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700 transition-all duration-200"
                     onClick={() => selectedArticle && fetchVentasArticulo(selectedArticle.codArticulo)}
                   >
-                    <Filter className="w-4 h-4 mr-2" />
+                    <RefreshCw className="w-4 h-4 mr-2" />
                     Actualizar
                   </Button>
                 </div>

@@ -53,12 +53,13 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
     stockSeguridad: 0,
     nivelServicio: 0,
     desviacionEstandar: 0,
-    modeloInventario: "LOTEFIJO" as "LOTEFIJO" | "INTERVALOFIJO" ,
-    proveedorPredeterminado: null as Proveedor | null,
+    modeloInventario: "LOTEFIJO" as "LOTEFIJO" | "INTERVALOFIJO",
+    codProveedorPredeterminado: null as number | null,
     archivo: null as File | null,
   })
 
   const [loading, setLoading] = useState(false)
+  const [isDataReady, setIsDataReady] = useState(false)
   const { toast } = useToast()
   const [proveedoresFiltrados, setProveedoresFiltrados] = useState<Proveedor[]>([])
 
@@ -76,26 +77,34 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
   }
 
   useEffect(() => {
-    if (articulo) {
-      setFormData({
-        nombreArt: articulo.nombreArt,
-        descripArt: articulo.descripArt,
-        demandaAnual: articulo.demandaAnual,
-        stockActual: articulo.stockActual,
-        inventarioMax: articulo.inventarioMax,
-        stockSeguridad: articulo.stockSeguridad,
-        nivelServicio: articulo.nivelServicio ?? 0,
-        desviacionEstandar: articulo.desviacionEstandar ?? 0,
-        modeloInventario: articulo.modeloInventario,
-        proveedorPredeterminado: articulo.proveedorPredeterminado ?? null,
-        archivo: null,
-      })
-
-      cargarProveedoresFiltrados(articulo.codArticulo)
-    } else {
-      setProveedoresFiltrados(proveedores)
+    const initializeForm = async () => {
+      if (articulo) {
+        setIsDataReady(false)
+        await cargarProveedoresFiltrados(articulo.codArticulo)
+        setFormData({
+          nombreArt: articulo.nombreArt,
+          descripArt: articulo.descripArt,
+          demandaAnual: articulo.demandaAnual,
+          stockActual: articulo.stockActual,
+          inventarioMax: articulo.inventarioMax,
+          stockSeguridad: articulo.stockSeguridad,
+          nivelServicio: Math.round((articulo.nivelServicio ?? 0) * 100),
+          desviacionEstandar: articulo.desviacionEstandar ?? 0,
+          modeloInventario: (articulo.modeloInventario?.trim().toUpperCase() as "LOTEFIJO" | "INTERVALOFIJO") || "LOTEFIJO",
+          codProveedorPredeterminado: articulo.proveedorPredeterminado?.codProveedor ?? null,
+          archivo: null,
+        })
+        setIsDataReady(true)
+      } else {
+        setProveedoresFiltrados(proveedores)
+        setIsDataReady(true)
+      }
     }
+
+    initializeForm()
   }, [articulo, proveedores])
+
+  const providerOptions = articulo ? proveedoresFiltrados : proveedores
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null
@@ -108,7 +117,7 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
 
     try {
       if (articulo) {
-        // Edición - usar JSON
+        const provider = providerOptions.find((p) => p.codProveedor === formData.codProveedorPredeterminado)
         const url = `${API_BASE_URL}/articulos/${articulo.codArticulo}`
         const payload = {
           nombreArt: formData.nombreArt,
@@ -120,7 +129,7 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
           nivelServicio: formData.nivelServicio,
           desviacionEstandar: formData.desviacionEstandar,
           modeloInventario: formData.modeloInventario,
-          proveedorPredeterminado: formData.proveedorPredeterminado,
+          proveedorPredeterminado: provider,
         }
 
         const response = await fetch(url, {
@@ -200,264 +209,267 @@ export function ArticuloForm({ articulo, proveedores, onSave, onCancel }: Articu
         </CardHeader>
 
         <CardContent className="p-6">
-          <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Información Básica */}
-            <div className="space-y-6">
-              <div className="flex items-center space-x-2 pb-3 border-b border-gray-700/30">
-                <div className="w-6 h-6 bg-red-600/20 rounded-lg flex items-center justify-center">
-                  <Package className="w-3 h-3 text-red-400" />
-                </div>
-                <h3 className="text-lg font-semibold text-white">Información Básica</h3>
+          {!isDataReady ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <div className="relative">
+                <div className="w-12 h-12 border-4 border-gray-300 border-t-red-600 rounded-full animate-spin mb-4"></div>
               </div>
+              <p className="text-gray-400">Cargando datos del artículo...</p>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-8">
+              {/* Información Básica */}
+              <div className="space-y-6">
+                <div className="flex items-center space-x-2 pb-3 border-b border-gray-700/30">
+                  <div className="w-6 h-6 bg-red-600/20 rounded-lg flex items-center justify-center">
+                    <Package className="w-3 h-3 text-red-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-white">Información Básica</h3>
+                </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <Label htmlFor="nombreArt" className="text-gray-300 font-medium">
+                      Nombre del Artículo <span className="text-red-400">*</span>
+                    </Label>
+                    <Input
+                      id="nombreArt"
+                      value={formData.nombreArt}
+                      onChange={(e) => handleInputChange("nombreArt", e.target.value)}
+                      className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12"
+                      required
+                    />
+                  </div>
+                  
+
+                  <div className="space-y-3">
+                    <Label htmlFor="modeloInventario" className="text-gray-300 font-medium">
+                      Modelo de Inventario <span className="text-red-400">*</span>
+                    </Label>
+                    
+                    <Select
+
+                        value={formData.modeloInventario}
+                        onValueChange={(value) => handleInputChange("modeloInventario", value)}
+                      >
+                      <SelectTrigger className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12">
+                        <SelectValue placeholder="Seleccionar modelo" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-gray-800 border-gray-700 backdrop-blur-md">
+                        <SelectItem value="LOTEFIJO" className="text-white hover:bg-gray-700/50">
+                          Lote Fijo
+                        </SelectItem>
+                        <SelectItem value="INTERVALOFIJO" className="text-white hover:bg-gray-700/50">
+                          Intervalo Fijo
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
                 <div className="space-y-3">
-                  <Label htmlFor="nombreArt" className="text-gray-300 font-medium">
-                    Nombre del Artículo <span className="text-red-400">*</span>
+                  <Label htmlFor="descripArt" className="text-gray-300 font-medium">
+                    Descripción <span className="text-red-400">*</span>
                   </Label>
-                  <Input
-                    id="nombreArt"
-                    value={formData.nombreArt}
-                    onChange={(e) => handleInputChange("nombreArt", e.target.value)}
-                    className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12"
-                    required
+                  <Textarea
+                    id="descripArt"
+                    value={formData.descripArt}
+                    onChange={(e) => handleInputChange("descripArt", e.target.value)}
+                    className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 min-h-[100px]"
+                    rows={3}
                   />
                 </div>
-                
 
                 <div className="space-y-3">
-                  <Label htmlFor="modeloInventario" className="text-gray-300 font-medium">
-                    Modelo de Inventario <span className="text-red-400">*</span>
+                  <Label htmlFor="proveedorPredeterminadoId" className="text-gray-300 font-medium">
+                    Proveedor Predeterminado <span className="text-red-400">*</span>
                   </Label>
-                  
                   <Select
-
-                      value={formData.modeloInventario}
-                      onValueChange={(value) => handleInputChange("modeloInventario", value)}
-                    >
+                    value={formData.codProveedorPredeterminado ? String(formData.codProveedorPredeterminado) : "none"}
+                    onValueChange={(value) => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        codProveedorPredeterminado: value === "none" ? null : Number(value),
+                      }))
+                    }}
+                    required
+                  >
                     <SelectTrigger className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12">
-                      <SelectValue placeholder="Seleccionar modelo" />
+                      <SelectValue placeholder="Seleccionar proveedor" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 border-gray-700 backdrop-blur-md">
-                      <SelectItem value="LOTEFIJO" className="text-white hover:bg-gray-700/50">
-                        Lote Fijo
+                      <SelectItem value="none" className="text-white hover:bg-gray-700/50">
+                        -- Ninguno --
                       </SelectItem>
-                      <SelectItem value="INTERVALOFIJO" className="text-white hover:bg-gray-700/50">
-                        Intervalo Fijo
-                      </SelectItem>
+                      {providerOptions.map((p) => (
+                        <SelectItem
+                          key={p.codProveedor}
+                          value={String(p.codProveedor)}
+                          className="text-white hover:bg-gray-700/50"
+                        >
+                          {p.nombreProveedor}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <Label htmlFor="descripArt" className="text-gray-300 font-medium">
-                  Descripción <span className="text-red-400">*</span>
-                </Label>
-                <Textarea
-                  id="descripArt"
-                  value={formData.descripArt}
-                  onChange={(e) => handleInputChange("descripArt", e.target.value)}
-                  className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 min-h-[100px]"
-                  rows={3}
-                />
+              {/* Stock y Parámetros */}
+              <div className="space-y-6">
+                <div className="flex items-center space-x-2 pb-3 border-b border-gray-700/30">
+                  <div className="w-6 h-6 bg-blue-600/20 rounded-lg flex items-center justify-center">
+                    <Package className="w-3 h-3 text-blue-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-white">Stock y Parámetros</h3>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-3">
+                    <Label htmlFor="demandaAnual" className="text-gray-300 font-medium">
+                      Demanda Anual <span className="text-red-400">*</span>
+                    </Label>
+                    <Input
+                      id="demandaAnual"
+                      type="number"
+                      min={0}
+                      value={formData.demandaAnual}
+                      onChange={(e) => handleInputChange("demandaAnual", Number(e.target.value))}
+                      className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <Label htmlFor="stockActual" className="text-gray-300 font-medium">
+                      Stock Actual <span className="text-red-400">*</span>
+                    </Label>
+                    <Input
+                      id="stockActual"
+                      type="number"
+                      min={0}
+                      value={formData.stockActual}
+                      onChange={(e) => handleInputChange("stockActual", Number(e.target.value))}
+                      className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <Label htmlFor="inventarioMax" className="text-gray-300 font-medium">
+                      Inventario Máximo <span className="text-red-400">*</span>
+                    </Label>
+                    <Input
+                      id="inventarioMax"
+                      type="number"
+                      min={0}
+                      value={formData.inventarioMax}
+                      onChange={(e) => handleInputChange("inventarioMax", Number(e.target.value))}
+                      className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <Label htmlFor="stockSeguridad" className="text-gray-300 font-medium">
+                    Stock Seguridad <span className="text-red-400">*</span>
+                  </Label>
+                  <Input
+                    id="stockSeguridad"
+                    type="number"
+                    min={0}
+                    value={formData.stockSeguridad}
+                    onChange={(e) => handleInputChange("stockSeguridad", Number(e.target.value))}
+                    className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <Label htmlFor="nivelServicio" className="text-gray-300 font-medium">
+                      Nivel de Servicio %
+                    </Label>
+                    <Input
+                      id="nivelServicio"
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={formData.nivelServicio}
+                      onChange={(e) => handleInputChange("nivelServicio", Number(e.target.value))}
+                      className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <Label htmlFor="desviacionEstandar" className="text-gray-300 font-medium">
+                      Desviación Estándar
+                    </Label>
+                    <Input
+                      id="desviacionEstandar"
+                      type="number"
+                      min={0}
+                      value={formData.desviacionEstandar}
+                      onChange={(e) => handleInputChange("desviacionEstandar", Number(e.target.value))}
+                      className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12"
+                      required
+                    />
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-3">
-                <Label htmlFor="proveedorPredeterminadoId" className="text-gray-300 font-medium">
-                  Proveedor Predeterminado <span className="text-red-400">*</span>
-                </Label>
-                <Select
-                  value={
-                    formData.proveedorPredeterminado !== null
-                      ? String(formData.proveedorPredeterminado.codProveedor)
-                      : "none"
-                  }
-                  onValueChange={(value) => {
-                    const selectedProveedor =
-                      value === "none" ? null : proveedores.find((p) => p.codProveedor === Number(value)) || null
-                    setFormData((prev) => ({
-                      ...prev,
-                      proveedorPredeterminado: selectedProveedor,
-                    }))
-                  }}
-                  required
+              {/* Imagen */}
+              <div className="space-y-6">
+                <div className="flex items-center space-x-2 pb-3 border-b border-gray-700/30">
+                  <div className="w-6 h-6 bg-green-600/20 rounded-lg flex items-center justify-center">
+                    <Package className="w-3 h-3 text-green-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-white">Imagen</h3>
+                </div>
+
+                {!articulo && (
+                  <div className="space-y-3">
+                    <Label htmlFor="archivo" className="text-gray-300 font-medium">
+                      Imagen del Artículo
+                    </Label>
+                    <Input
+                      id="archivo"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12 file:bg-red-600 file:text-white file:border-0 file:rounded-md file:px-4 file:py-2 file:mr-4"
+                    />
+                  </div>
+                )}
+                
+                {articulo && (
+                  <div className="text-gray-400 text-sm">
+                    La imagen no se puede modificar durante la edición
+                  </div>
+                )}
+              </div>
+
+              {/* Botones */}
+              <div className="flex justify-end space-x-3 pt-6 border-t border-gray-700/30">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={onCancel}
+                  disabled={loading}
+                  className="text-gray-400 hover:text-white hover:bg-gray-700/50"
                 >
-                  <SelectTrigger className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12">
-                    <SelectValue placeholder="Seleccionar proveedor" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-800 border-gray-700 backdrop-blur-md">
-                    <SelectItem value="none" className="text-white hover:bg-gray-700/50">
-                      -- Ninguno --
-                    </SelectItem>
-                    {(articulo ? proveedoresFiltrados : proveedores).map((p) => (
-                      <SelectItem
-                        key={p.codProveedor}
-                        value={String(p.codProveedor)}
-                        className="text-white hover:bg-gray-700/50"
-                      >
-                        {p.nombreProveedor}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  Cancelar
+                </Button>
+                <Button
+                  className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg"
+                  type="submit"
+                  disabled={loading || formData.stockActual <= 0}
+                >
+                  {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                  Guardar
+                </Button>
               </div>
-            </div>
-
-            {/* Stock y Parámetros */}
-            <div className="space-y-6">
-              <div className="flex items-center space-x-2 pb-3 border-b border-gray-700/30">
-                <div className="w-6 h-6 bg-blue-600/20 rounded-lg flex items-center justify-center">
-                  <Package className="w-3 h-3 text-blue-400" />
-                </div>
-                <h3 className="text-lg font-semibold text-white">Stock y Parámetros</h3>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-3">
-                  <Label htmlFor="demandaAnual" className="text-gray-300 font-medium">
-                    Demanda Anual <span className="text-red-400">*</span>
-                  </Label>
-                  <Input
-                    id="demandaAnual"
-                    type="number"
-                    min={0}
-                    value={formData.demandaAnual}
-                    onChange={(e) => handleInputChange("demandaAnual", Number(e.target.value))}
-                    className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12"
-                    required
-                  />
-                </div>
-                <div className="space-y-3">
-                  <Label htmlFor="stockActual" className="text-gray-300 font-medium">
-                    Stock Actual <span className="text-red-400">*</span>
-                  </Label>
-                  <Input
-                    id="stockActual"
-                    type="number"
-                    min={0}
-                    value={formData.stockActual}
-                    onChange={(e) => handleInputChange("stockActual", Number(e.target.value))}
-                    className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12"
-                    required
-                  />
-                </div>
-                <div className="space-y-3">
-                  <Label htmlFor="inventarioMax" className="text-gray-300 font-medium">
-                    Inventario Máximo <span className="text-red-400">*</span>
-                  </Label>
-                  <Input
-                    id="inventarioMax"
-                    type="number"
-                    min={0}
-                    value={formData.inventarioMax}
-                    onChange={(e) => handleInputChange("inventarioMax", Number(e.target.value))}
-                    className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <Label htmlFor="stockSeguridad" className="text-gray-300 font-medium">
-                  Stock Seguridad <span className="text-red-400">*</span>
-                </Label>
-                <Input
-                  id="stockSeguridad"
-                  type="number"
-                  min={0}
-                  value={formData.stockSeguridad}
-                  onChange={(e) => handleInputChange("stockSeguridad", Number(e.target.value))}
-                  className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-3">
-                  <Label htmlFor="nivelServicio" className="text-gray-300 font-medium">
-                    Nivel de Servicio %
-                  </Label>
-                  <Input
-                    id="nivelServicio"
-                    type="number"
-                    min={0}
-                    max={100}
-                    value={formData.nivelServicio}
-                    onChange={(e) => handleInputChange("nivelServicio", Number(e.target.value))}
-                    className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12"
-                    required
-                  />
-                </div>
-                <div className="space-y-3">
-                  <Label htmlFor="desviacionEstandar" className="text-gray-300 font-medium">
-                    Desviación Estándar
-                  </Label>
-                  <Input
-                    id="desviacionEstandar"
-                    type="number"
-                    min={0}
-                    value={formData.desviacionEstandar}
-                    onChange={(e) => handleInputChange("desviacionEstandar", Number(e.target.value))}
-                    className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12"
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Imagen */}
-            <div className="space-y-6">
-              <div className="flex items-center space-x-2 pb-3 border-b border-gray-700/30">
-                <div className="w-6 h-6 bg-green-600/20 rounded-lg flex items-center justify-center">
-                  <Package className="w-3 h-3 text-green-400" />
-                </div>
-                <h3 className="text-lg font-semibold text-white">Imagen</h3>
-              </div>
-
-              {!articulo && (
-                <div className="space-y-3">
-                  <Label htmlFor="archivo" className="text-gray-300 font-medium">
-                    Imagen del Artículo
-                  </Label>
-                  <Input
-                    id="archivo"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="bg-gray-700/50 backdrop-blur-sm border-gray-600/50 text-white focus:border-red-500 focus:ring-red-500/20 h-12 file:bg-red-600 file:text-white file:border-0 file:rounded-md file:px-4 file:py-2 file:mr-4"
-                  />
-                </div>
-              )}
-              
-              {articulo && (
-                <div className="text-gray-400 text-sm">
-                  La imagen no se puede modificar durante la edición
-                </div>
-              )}
-            </div>
-
-            {/* Botones */}
-            <div className="flex justify-end space-x-3 pt-6 border-t border-gray-700/30">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={onCancel}
-                disabled={loading}
-                className="text-gray-400 hover:text-white hover:bg-gray-700/50"
-              >
-                Cancelar
-              </Button>
-              <Button
-                className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg"
-                type="submit"
-                disabled={loading || formData.stockActual <= 0}
-              >
-                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                Guardar
-              </Button>
-            </div>
-          </form>
+            </form>
+          )}
         </CardContent>
       </Card>
     </div>

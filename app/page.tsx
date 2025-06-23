@@ -85,12 +85,12 @@ export default function InventoryManagement() {
     valorTotalInventario: 0,
   })
   const [showArticuloForm, setShowArticuloForm] = useState(false)
-  const [showArticuloCreacion, setShowArticuloCreacion] = useState(false)
   const [editingArticulo, setEditingArticulo] = useState<Articulo | null>(null)
   const [showOrdenCompra, setShowOrdenCompra] = useState(false)
   const [selectedArticulo, setSelectedArticulo] = useState<Articulo | null>(null)
-  const [showVentaForm, setShowVentaForm] = useState(false)
   const [lightboxImage, setLightboxImage] = useState<string | null>(null)
+  const [showVentaForm, setShowVentaForm] = useState(false)
+  const [showArticuloCreacion, setShowArticuloCreacion] = useState(false)
   const { toast } = useToast()
 
   // Función genérica para obtener artículos
@@ -289,9 +289,18 @@ export default function InventoryManagement() {
     refreshArticulos()
   }
 
-  const handleArticuloSaved = () => handleModalClose(setShowArticuloForm, setEditingArticulo)
-  const handleVentaSaved = () => handleModalClose(setShowVentaForm)
+  const handleArticuloSaved = () => {
+    handleModalClose(setShowArticuloForm, setEditingArticulo)
+  }
+  const handleVentaSaved = () => {
+    // Aquí podrías necesitar manejar el cierre del formulario de venta si lo controlabas con estado local
+  }
   const handleOrdenCompraCreated = () => handleModalClose(setShowOrdenCompra, setSelectedArticulo)
+
+  const handleOpenArticuloForm = () => {
+    setEditingArticulo(null)
+    setShowArticuloForm(true)
+  }
 
   if (loading) {
     return (
@@ -314,7 +323,7 @@ export default function InventoryManagement() {
   return (
     <div className="min-h-screen bg-gray-900">
       {/* Header */}
-      <header className="bg-gray-800/95 backdrop-blur-md border-b border-gray-700 sticky top-0 z-50">
+      <header className="bg-gray-800/95 backdrop-blur-md border-b border-gray-700 sticky top-0 z-40">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -528,7 +537,8 @@ export default function InventoryManagement() {
                         <DropdownMenuContent className="bg-slate-800 border-slate-700">
                           <DropdownMenuItem
                             className="text-white hover:bg-slate-700"
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation()
                               setEditingArticulo(articulo)
                               setShowArticuloForm(true)
                             }}
@@ -538,7 +548,8 @@ export default function InventoryManagement() {
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-white hover:bg-slate-700"
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation()
                               const newStock = prompt("Nuevo stock:", articulo.stockActual.toString())
                               if (newStock && !isNaN(Number(newStock))) {
                                 updateStock(articulo.codArticulo, Number(newStock))
@@ -551,7 +562,8 @@ export default function InventoryManagement() {
                           {needsReorder && (
                             <DropdownMenuItem
                               className="text-blue-400 hover:bg-slate-700"
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.stopPropagation()
                                 setSelectedArticulo(articulo)
                                 setShowOrdenCompra(true)
                               }}
@@ -562,7 +574,8 @@ export default function InventoryManagement() {
                           )}
                           <DropdownMenuItem
                             className="text-red-400 hover:bg-slate-700"
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation()
                               if (confirm("¿Estás seguro de que quieres eliminar este artículo?")) {
                                 deleteArticulo(articulo.codArticulo)
                               }
@@ -598,7 +611,8 @@ export default function InventoryManagement() {
                         <DropdownMenuContent className="bg-slate-800 border-slate-700">
                           <DropdownMenuItem
                             className="text-white hover:bg-slate-700"
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation()
                               setEditingArticulo(articulo)
                               setShowArticuloForm(true)
                             }}
@@ -609,7 +623,8 @@ export default function InventoryManagement() {
                           {needsReorder && (
                             <DropdownMenuItem
                               className="text-blue-400 hover:bg-slate-700"
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.stopPropagation()
                                 setSelectedArticulo(articulo)
                                 setShowOrdenCompra(true)
                               }}
@@ -620,7 +635,8 @@ export default function InventoryManagement() {
                           )}
                           <DropdownMenuItem
                             className="text-red-400 hover:bg-slate-700"
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation()
                               if (confirm("¿Estás seguro de que quieres eliminar este artículo?")) {
                                 deleteArticulo(articulo.codArticulo)
                               }
@@ -723,7 +739,7 @@ export default function InventoryManagement() {
             <h3 className="text-2xl font-bold text-white mb-2">No se encontraron artículos</h3>
             <p className="text-gray-400 mb-6">Intenta ajustar los filtros de búsqueda o agrega nuevos productos</p>
             <Button
-              onClick={() => setShowArticuloCreacion(true)}
+              onClick={handleOpenArticuloForm}
               className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white"
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -747,17 +763,12 @@ export default function InventoryManagement() {
       )}
 
       {showArticuloCreacion && (
-        <ArticuloCreacion
-          onSave={handleArticuloSaved}
-          onCancel={() => {
-            setShowArticuloCreacion(false)
-          }}
-        />
+        <ArticuloCreacion onSave={handleArticuloSaved} onCancel={() => setShowArticuloCreacion(false)} />
       )}
 
-      {/* Venta Form Modal */}
+      {/* Venta Form Modal (necesitará su propio estado si se usa) */}
       {showVentaForm && (
-        <VentaForm articulos={articulos} onSuccess={handleVentaSaved} onCancel={() => setShowVentaForm(false)} />
+        <VentaForm articulos={articulos} onSuccess={() => setShowVentaForm(false)} onCancel={() => setShowVentaForm(false)} />
       )}
 
       {/* Orden Compra Dialog */}

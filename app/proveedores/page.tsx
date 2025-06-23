@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Search, Plus, Filter, MoreHorizontal, Users, Loader2, LinkIcon, Trash2, PackageOpen, UserMinus } from "lucide-react"
+import { Search, Plus, Filter, MoreHorizontal, Users, Loader2, LinkIcon, Trash2, PackageOpen, UserMinus, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -213,7 +213,7 @@ export default function ProveedoresPage() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      {/* Header */}
+      {/* Header Original Restaurado */}
       <header className="bg-gray-800 border-b border-gray-700">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -233,8 +233,6 @@ export default function ProveedoresPage() {
               >
                 Gestión de Inventario
               </Button>
-
-              {/* Botón para agregar proveedor */}
               <Button className="bg-red-600 hover:bg-red-700" onClick={() => setShowProveedorForm(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 Agregar Proveedor
@@ -270,10 +268,10 @@ export default function ProveedoresPage() {
 
           <Button
             variant="outline"
-            className="border-gray-700 text-gray-800 hover:bg-gray-700"
+            className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700 transition-all duration-200"
             onClick={fetchProveedores}
           >
-            <Filter className="w-4 h-4 mr-2" />
+            <RefreshCw className="w-4 h-4 mr-2" />
             Actualizar
           </Button>
         </div>
@@ -316,7 +314,6 @@ export default function ProveedoresPage() {
                             <span className="hidden sm:inline">Agregar Artículos</span>
                           </Button>
                           <Button
-
                             size="sm"
                             className="h-10 bg-yellow-400 hover:bg-yellow-700 text-gray-800 hover:text-white"
                             onClick={() => handleViewArticulos(proveedor)}
@@ -324,19 +321,17 @@ export default function ProveedoresPage() {
                             <PackageOpen className="h-4 w-4 mr-1" />
                             <span className="hidden sm:inline">Ver Artículos</span>
                           </Button>
-                          
-                              <Button
-                                className="h-10 text-red-400 bg-red-500 hover:bg-red-700 hover:text-white text-gray-800"
-                                onClick={() => {
-                                  if (confirm("¿Estás seguro de que quieres eliminar este proveedor?")) {
-                                    deleteProveedor(proveedor.codProveedor)
-                                  }
-                                }}
-                              >
-                                <UserMinus className="h-4 w-4 mr-2" />
-                               Dar de Baja
-                              </Button>
-                        
+                          <Button
+                            className="h-10 text-red-400 bg-red-500 hover:bg-red-700 hover:text-white text-gray-800"
+                            onClick={() => {
+                              if (confirm("¿Estás seguro de que quieres eliminar este proveedor?")) {
+                                deleteProveedor(proveedor.codProveedor)
+                              }
+                            }}
+                          >
+                            <UserMinus className="h-4 w-4 mr-2" />
+                            Dar de Baja
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -361,7 +356,7 @@ export default function ProveedoresPage() {
         </Card>
       </div>
 
-      {/* Proveedor Form Modal */}
+      {/* Formulario de Proveedor (con estado local) */}
       {showProveedorForm && (
         <ProveedorForm
           onSave={handleProveedorSaved}
@@ -370,7 +365,7 @@ export default function ProveedoresPage() {
         />
       )}
 
-      {/* Articulo Proveedor Form Modal */}
+      {/* Formulario de Artículo-Proveedor */}
       {showArticuloProveedorForm && selectedProveedor && (
         <ArticuloProveedorForm
           proveedor={selectedProveedor}
