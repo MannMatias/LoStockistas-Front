@@ -36,7 +36,7 @@ interface DetalleOrdenCompra {
 
 interface OrdenCompra {
   numOC: number
-  cantArt: number
+  cantidad: number
   montoCompra: number
   fechaCreacion: string
   fechaEntregaEstimada: string
@@ -119,7 +119,7 @@ export function OrdenDetalleDialog({ orden, open, onClose }: OrdenDetalleDialogP
             <div className="flex items-center text-gray-300">
               <Package className="w-4 h-4 mr-2 text-gray-400" />
               <span className="font-semibold">Cantidad de Artículos:</span>
-              <span className="ml-2">{orden.cantArt}</span>
+              <span className="ml-2">{orden.cantidad}</span>
             </div>
             <div className="flex items-center text-gray-300">
               <Truck className="w-4 h-4 mr-2 text-gray-400" />

@@ -70,12 +70,11 @@ interface InventoryStats {
 }
 
 // Configuración de la API
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
 
 export default function InventoryManagement() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedModelo, setSelectedModelo] = useState("Todos")
-  const [mostrarSoloCriticos, setMostrarSoloCriticos] = useState(false)
   const [articulos, setArticulos] = useState<Articulo[]>([])
   const [proveedores, setProveedores] = useState<Proveedor[]>([])
   const [loading, setLoading] = useState(true)
@@ -95,11 +94,11 @@ export default function InventoryManagement() {
   const [showOrdenForm, setShowOrdenForm] = useState(false)
   const { toast } = useToast()
 
-  // Función para obtener todos los artículos
-  const fetchArticulos = async () => {
+  // Función genérica para obtener artículos
+  const fetchArticulos = async (endpoint = "articulos") => {
     try {
       setLoading(true)
-      const response = await fetch(`${API_BASE_URL}/articulos`)
+      const response = await fetch(`${API_BASE_URL}/${endpoint}`)
 
       if (!response.ok) {
         throw new Error(`Error ${response.status}: ${response.statusText}`)
@@ -109,10 +108,10 @@ export default function InventoryManagement() {
       setArticulos(data)
       updateStats(data)
     } catch (error) {
-      console.error("Error fetching articulos:", error)
+      console.error(`Error fetching ${endpoint}:`, error)
       toast({
         title: "Error",
-        description: "No se pudieron cargar los artículos",
+        description: `No se pudieron cargar los artículos`,
         variant: "destructive",
       })
     } finally {
@@ -120,28 +119,14 @@ export default function InventoryManagement() {
     }
   }
 
-  //Fetch artículos con stock crítico
-  const fetchArticulosCriticos = async () => {
-    try {
-      setLoading(true)
-      const response = await fetch(`${API_BASE_URL}/articulos/stock-critico`)
-
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`)
-      }
-
-      const data = await response.json()
-      setArticulos(data)
-      updateStats(data)
-    } catch (error) {
-      console.error("Error fetching critical stock articulos:", error)
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los artículos con stock crítico",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
+  // Función para actualizar todos los artículos
+  const refreshArticulos = () => {
+    if (selectedModelo === "CRITICO") {
+      fetchArticulos("articulos/stock-critico")
+    } else if (selectedModelo === "PUNTOPEDIDO") {
+      fetchArticulos("articulos/punto-pedido")
+    } else {
+      fetchArticulos()
     }
   }
 
@@ -149,16 +134,13 @@ export default function InventoryManagement() {
   const fetchProveedores = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/proveedores`)
-      const text = await response.text()
-      setProveedores(JSON.parse(text))
-      try {
-        const data = JSON.parse(text)
-        // Usá data normalmente
-      } catch (err) {
-        console.error("JSON inválido:", text)
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`)
       }
-    } catch (err) {
-      console.error("Error fetch:", err)
+      const data = await response.json()
+      setProveedores(data)
+    } catch (error) {
+      console.error("Error fetching proveedores:", error)
     }
   }
 
@@ -178,7 +160,7 @@ export default function InventoryManagement() {
         description: "Artículo eliminado correctamente",
       })
 
-      fetchArticulos() // Recargar artículos
+      refreshArticulos()
     } catch (error) {
       console.error("Error deleting articulo:", error)
       toast({
@@ -209,7 +191,7 @@ export default function InventoryManagement() {
         description: "Stock actualizado correctamente",
       })
 
-      fetchArticulos() // Recargar artículos
+      refreshArticulos()
     } catch (error) {
       console.error("Error updating stock:", error)
       toast({
@@ -239,12 +221,19 @@ export default function InventoryManagement() {
     setStats({ totalArticulos, stockNormal, stockBajo, sinStock, valorTotalInventario })
   }
 
-  // Filtrar artículos
+  // Filtrar artículos - por búsqueda de texto y modelo cuando sea necesario
   const filteredArticulos = articulos.filter((articulo) => {
     const matchesSearch =
       articulo.nombreArt.toLowerCase().includes(searchTerm.toLowerCase()) ||
       articulo.codArticulo.toString().includes(searchTerm)
-    const matchesModelo = selectedModelo === "Todos" || articulo.modeloInventario === selectedModelo
+    
+    // Aplicar filtro de modelo solo para LOTEFIJO e INTERVALOFIJO
+    const matchesModelo = 
+      selectedModelo === "Todos" || 
+      selectedModelo === "CRITICO" || 
+      selectedModelo === "PUNTOPEDIDO" || 
+      articulo.modeloInventario === selectedModelo
+    
     return matchesSearch && matchesModelo
   })
 
@@ -273,6 +262,8 @@ export default function InventoryManagement() {
         return "Stock Crítico"
       case "sin-stock":
         return "Sin Stock"
+      case "puntopedido":
+        return "Punto Pedido"
       default:
         return "Desconocido"
     }
@@ -290,28 +281,19 @@ export default function InventoryManagement() {
     fetchProveedores()
   }, [])
 
-  const handleArticuloSaved = () => {
-    setShowArticuloForm(false)
-    setEditingArticulo(null)
-    fetchArticulos()
+  // Handler genérico para cerrar modales y actualizar datos
+  const handleModalClose = (setter: (value: boolean) => void, resetValue?: any) => {
+    setter(false)
+    if (resetValue !== undefined) {
+      resetValue(null)
+    }
+    refreshArticulos()
   }
 
-  const handleVentaSaved = () => {
-    setShowVentaForm(false)
-    fetchArticulos()
-  }
-
-  const handleOrdenFormCreated = () => {
-    setShowOrdenForm(false)
-    setSelectedArticulo(null)
-    fetchArticulos()
-  }
-
-  const handleOrdenCompraCreated = () => {
-    setShowOrdenCompra(false)
-    setSelectedArticulo(null)
-    fetchArticulos()
-  }
+  const handleArticuloSaved = () => handleModalClose(setShowArticuloForm, setEditingArticulo)
+  const handleVentaSaved = () => handleModalClose(setShowVentaForm)
+  const handleOrdenFormCreated = () => handleModalClose(setShowOrdenForm, setSelectedArticulo)
+  const handleOrdenCompraCreated = () => handleModalClose(setShowOrdenCompra, setSelectedArticulo)
 
   if (loading) {
     return (
@@ -371,13 +353,7 @@ export default function InventoryManagement() {
                 <Plus className="w-4 h-4 mr-2" />
                 Nueva Venta
               </Button>
-              <Button
-                onClick={() => setShowOrdenForm(true)}
-                className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg transition-all duration-200"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Nueva Orden
-              </Button>
+
               <Button
                 className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg transition-all duration-200"
                 onClick={() => setShowArticuloCreacion(true)}
@@ -474,20 +450,24 @@ export default function InventoryManagement() {
           <Select
             value={selectedModelo}
             onValueChange={(value) => {
+              setSelectedModelo(value)
               if (value === "CRITICO") {
-                fetchArticulosCriticos()
+                fetchArticulos("articulos/stock-critico")
+              } else if (value === "PUNTOPEDIDO") {
+                fetchArticulos("articulos/punto-pedido")
+              } else if (value === "LOTEFIJO" || value === "INTERVALOFIJO") {
+                fetchArticulos()
               } else {
-                setSelectedModelo(value)
                 fetchArticulos()
               }
             }}
           >
             <SelectTrigger className="w-full lg:w-64 h-12 bg-gray-800 border-gray-700 text-white">
-              <SelectValue placeholder="Modelo de Inventario" />
+              <SelectValue placeholder="Seleccionar filtros" />
             </SelectTrigger>
             <SelectContent className="bg-slate-800 border-slate-700">
               <SelectItem value="Todos" className="text-white hover:bg-slate-700">
-                Todos los modelos
+                Todos los Artículos
               </SelectItem>
               <SelectItem value="LOTEFIJO" className="text-white hover:bg-slate-700">
                 Lote Fijo
@@ -496,7 +476,10 @@ export default function InventoryManagement() {
                 Intervalo Fijo
               </SelectItem>
               <SelectItem value="CRITICO" className="text-white hover:bg-slate-700">
-                Stock Crítico
+                Stock Seguridad
+              </SelectItem>
+              <SelectItem value="PUNTOPEDIDO" className="text-white hover:bg-slate-700">
+                Punto Pedido
               </SelectItem>
             </SelectContent>
           </Select>
@@ -504,7 +487,7 @@ export default function InventoryManagement() {
           <Button
             variant="outline"
             className="h-12 bg-gray-800 border-gray-700 text-white hover:bg-gray-700 transition-all duration-200"
-            onClick={fetchArticulos}
+            onClick={refreshArticulos}
           >
             <RefreshCw className="w-4 h-4 mr-2" />
             Actualizar
@@ -515,8 +498,7 @@ export default function InventoryManagement() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredArticulos.map((articulo) => {
             const status = getStockStatus(articulo)
-            const needsReorder =
-              articulo.stockActual <= articulo.puntoPedido && articulo.proveedorPredeterminado !== null
+            const needsReorder = articulo.proveedorPredeterminado !== null
 
             return (
               <Card
@@ -574,7 +556,7 @@ export default function InventoryManagement() {
                               }}
                             >
                               <ShoppingCart className="w-4 h-4 mr-2" />
-                              Crear Orden
+                              Crear Orden de Compra
                             </DropdownMenuItem>
                           )}
                           <DropdownMenuItem

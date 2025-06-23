@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ShoppingCart, X, Save, Loader2 } from "lucide-react"
 import { useState } from "react"
 import { useToast } from "@/hooks/use-toast"
+import { API_BASE_URL } from "@/app/page"
 
 interface VentaFormProps {
   onCancel: () => void
@@ -36,12 +37,19 @@ const VentaForm: React.FC<VentaFormProps> = ({ onCancel, onSuccess, articulos })
     e.preventDefault()
     setLoading(true)
     try {
-      // Simulación de la llamada a la API (reemplazar con la lógica real)
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      toast({
-        title: "Éxito",
-        description: "Venta registrada correctamente",
+      const response = await fetch(`${API_BASE_URL}/ventas/ventas`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
       })
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`)
+      }
+
+      const data = await response.json()
       onSuccess()
     } catch (error) {
       console.error("Error al registrar la venta:", error)

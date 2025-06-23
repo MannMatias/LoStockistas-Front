@@ -249,9 +249,24 @@ export default function ArticleOrdersSalesPage() {
       }
 
       const data: OrdenCompra[] = await response.json()
-      setOrdenesCompra(data)
+
+      // Procesar los datos para asegurar que cada orden tenga su proveedor asignado correctamente
+      const ordenesProcesadas = data.map((orden) => {
+        // Asumimos que la información del proveedor está en el primer detalle
+        const proveedorDesdeDetalle =
+          orden.detalles && orden.detalles.length > 0 && orden.detalles[0].articuloProveedor
+            ? orden.detalles[0].articuloProveedor.proveedor
+            : null
+
+        return {
+          ...orden,
+          proveedor: orden.proveedor || proveedorDesdeDetalle || selectedArticle?.proveedorPredeterminado,
+        }
+      })
+
+      setOrdenesCompra(ordenesProcesadas)
     } catch (error) {
-      console.error("Error fetching ordenes del artículo:", error)
+      console.error("Error fetching ordenes:", error)
       setOrdenesCompra([])
       toast({
         title: "Error",
@@ -820,7 +835,6 @@ export default function ArticleOrdersSalesPage() {
                           <TableHead className="text-gray-400">Nº Orden</TableHead>
                           <TableHead className="text-gray-400">Proveedor</TableHead>
                           <TableHead className="text-gray-400">Estado</TableHead>
-                          <TableHead className="text-gray-400">Fecha Creación</TableHead>
                           <TableHead className="text-gray-400">Cantidad</TableHead>
                           <TableHead className="text-gray-400 text-right">Monto</TableHead>
                           <TableHead className="text-gray-400 w-32 text-center">Acciones</TableHead>
@@ -839,9 +853,7 @@ export default function ArticleOrdersSalesPage() {
                                   {orden.estado.nombreEstadoOC}
                                 </Badge>
                               </TableCell>
-                              <TableCell className="font-medium text-white">
-                                {formatDate(orden.fechaCreacion)}
-                              </TableCell>
+
                               <TableCell className="font-medium text-white">{orden.cantArt}</TableCell>
                               <TableCell className="text-right font-semibold text-red-400">
                                 {formatPrice(orden.montoCompra)}
