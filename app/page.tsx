@@ -29,6 +29,7 @@ import { ArticuloForm } from "@/components/articulo-form"
 import { ArticuloCreacion } from "@/components/articulo-creacion"
 import VentaForm from "@/components/venta-form"
 import { OrdenCompraDialog } from "@/components/orden-compra-dialog"
+import { StockUpdateDialog } from "@/components/stock-update-dialog"
 
 interface Proveedor {
   codProveedor: number
@@ -91,6 +92,8 @@ export default function InventoryManagement() {
   const [lightboxImage, setLightboxImage] = useState<string | null>(null)
   const [showVentaForm, setShowVentaForm] = useState(false)
   const [showArticuloCreacion, setShowArticuloCreacion] = useState(false)
+  const [showStockDialog, setShowStockDialog] = useState(false)
+  const [stockArticulo, setStockArticulo] = useState<Articulo | null>(null)
   const { toast } = useToast()
 
   // Función genérica para obtener artículos
@@ -173,16 +176,36 @@ export default function InventoryManagement() {
   // Función para actualizar stock
   const updateStock = async (codArticulo: number, newStock: number) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/articulos/${codArticulo}/stock`, {
+      // Buscar el artículo actual para obtener todos sus datos
+      const articuloActual = articulos.find(a => a.codArticulo === codArticulo)
+      if (!articuloActual) {
+        throw new Error("Artículo no encontrado")
+      }
+
+      // Crear el DTO con todos los datos del artículo, actualizando solo el stock
+      const articuloDTO = {
+        nombreArt: articuloActual.nombreArt,
+        descripArt: articuloActual.descripArt,
+        demandaAnual: articuloActual.demandaAnual,
+        stockActual: newStock,
+        inventarioMax: articuloActual.inventarioMax,
+        stockSeguridad: articuloActual.stockSeguridad,
+        nivelServicio: articuloActual.nivelServicio * 100,
+        desviacionEstandar: articuloActual.desviacionEstandar ,
+        modeloInventario: articuloActual.modeloInventario,
+        proveedorPredeterminado: articuloActual.proveedorPredeterminado
+      }
+
+      const response = await fetch(`${API_BASE_URL}/articulos/${codArticulo}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ stockActual: newStock }),
+        body: JSON.stringify(articuloDTO),
       })
 
       if (!response.ok) {
-        throw new Error("Error al actualizar el stock")
+        throw new Error("Error al actualizar el artículo")
       }
 
       toast({
@@ -550,10 +573,8 @@ export default function InventoryManagement() {
                             className="text-white hover:bg-slate-700"
                             onClick={(e) => {
                               e.stopPropagation()
-                              const newStock = prompt("Nuevo stock:", articulo.stockActual.toString())
-                              if (newStock && !isNaN(Number(newStock))) {
-                                updateStock(articulo.codArticulo, Number(newStock))
-                              }
+                              setStockArticulo(articulo)
+                              setShowStockDialog(true)
                             }}
                           >
                             <RefreshCw className="w-4 h-4 mr-2" />
@@ -804,6 +825,22 @@ export default function InventoryManagement() {
             <X className="h-6 w-6" />
           </Button>
         </div>
+      )}
+
+      {showStockDialog && stockArticulo && (
+        <StockUpdateDialog
+          open={showStockDialog}
+          articulo={{ nombreArt: stockArticulo.nombreArt, stockActual: stockArticulo.stockActual }}
+          onSave={(newStock) => {
+            updateStock(stockArticulo.codArticulo, newStock)
+            setShowStockDialog(false)
+            setStockArticulo(null)
+          }}
+          onCancel={() => {
+            setShowStockDialog(false)
+            setStockArticulo(null)
+          }}
+        />
       )}
     </div>
   )
